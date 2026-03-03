@@ -8,6 +8,7 @@ import { BudgetsScreen } from "@/components/screens/budgets-screen"
 import { SavingsScreen } from "@/components/screens/savings-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
 import { GestureOverlay } from "@/components/dashboard/gesture-overlay"
+import { AutoRefresh } from "@/components/dashboard/auto-refresh"
 import type { Screen } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
@@ -63,6 +64,9 @@ export default function DashboardPage() {
 
       {/* Gesture overlay */}
       <GestureOverlay onNavigate={navigateTo} />
+
+      {/* Auto-refresh on new deploys */}
+      <AutoRefresh />
 
       {/* Screen indicator */}
       <div className="fixed top-2 right-2 z-50">
