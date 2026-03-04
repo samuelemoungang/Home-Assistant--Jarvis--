@@ -167,9 +167,15 @@ export async function parseAssistantMessage(message: string): Promise<AssistantR
 
 export async function checkHealth(): Promise<boolean> {
   try {
-    await apiFetch("/api/health");
+    const url = `${API_URL}/api/health`;
+    console.log("[v0] Health check fetching:", url);
+    const res = await fetch(url, { method: "GET", signal: AbortSignal.timeout(5000) });
+    console.log("[v0] Health check response status:", res.status);
+    const data = await res.json();
+    console.log("[v0] Health check data:", data);
     return true;
-  } catch {
+  } catch (e) {
+    console.log("[v0] Health check failed:", e);
     return false;
   }
 }

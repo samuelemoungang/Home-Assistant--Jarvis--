@@ -86,7 +86,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   // Check backend health on mount
   useEffect(() => {
+    console.log("[v0] Checking backend health at:", process.env.NEXT_PUBLIC_API_URL || "NO URL SET");
     api.checkHealth().then((ok) => {
+      console.log("[v0] Backend health check result:", ok);
       setIsConnected(ok);
       if (ok) refreshAll();
       else setIsLoading(false);
