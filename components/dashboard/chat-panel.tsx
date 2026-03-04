@@ -3,14 +3,18 @@
 import { useState, useRef, useCallback } from "react"
 import { Send, Mic, MicOff, Paperclip, X, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { parseAssistantMessage, addTransaction, type AssistantResponse } from "@/lib/api"
+import { parseFinanceMessage, addTransaction } from "@/lib/api"
 
 interface ChatMessage {
   role: "user" | "assistant"
   content: string
   timestamp: Date
-  action?: AssistantResponse
   categoryOptions?: string[]
+  pendingCategory?: {
+    type: "income" | "expense"
+    amount: number
+    description: string
+  }
   pendingTransaction?: {
     type: "income" | "expense"
     amount: number
@@ -30,6 +34,7 @@ interface ChatPanelProps {
 }
 
 const EXPENSE_CATEGORIES = ["Food", "Transport", "Housing", "Utilities", "Entertainment", "Health", "Shopping", "Education", "Insurance", "Other"]
+const INCOME_CATEGORIES = ["Salary", "Freelance", "Investment", "Gift", "Refund", "Other"]
 
 export function ChatPanel({
   className,
@@ -44,7 +49,6 @@ export function ChatPanel({
   const [isListening, setIsListening] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
-  const [pendingAskCategory, setPendingAskCategory] = useState<AssistantResponse | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -70,82 +74,44 @@ export function ChatPanel({
     setIsLoading(true)
     onSpeakingChange?.(true)
 
-    try {
-      if (useFinanceAI) {
-        const result = await parseAssistantMessage(userText)
-        handleAssistantResponse(result)
-      } else {
-        // Simulated response for non-finance contexts
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        const assistantMsg: ChatMessage = {
-          role: "assistant",
-          content: getSimulatedResponse(userText),
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, assistantMsg])
-      }
-    } catch {
-      // Fallback if backend is offline
-      const assistantMsg: ChatMessage = {
-        role: "assistant",
-        content: getSimulatedResponse(userText),
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, assistantMsg])
-    }
+    // Short delay for natural feel
+    await new Promise((resolve) => setTimeout(resolve, 400))
 
-    setIsLoading(false)
-    onSpeakingChange?.(false)
-    scrollToBottom()
-  }
+    if (useFinanceAI) {
+      const result = parseFinanceMessage(userText)
 
-  function handleAssistantResponse(result: AssistantResponse) {
-    if (result.action === "add_transaction" && result.saved) {
-      const msg: ChatMessage = {
-        role: "assistant",
-        content: `Added ${result.type}: ${result.amount} CHF in ${result.category}${result.description ? ` (${result.description})` : ""}.`,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, msg])
-      onTransactionAdded?.()
-    } else if (result.action === "add_transaction" && !result.saved) {
-      // Show confirmation before saving
-      const msg: ChatMessage = {
-        role: "assistant",
-        content: `Add ${result.amount} CHF ${result.type} in ${result.category}?`,
-        timestamp: new Date(),
-        pendingTransaction: {
-          type: result.type!,
-          amount: result.amount!,
-          category: result.category!,
-          description: result.description || "",
-          date: result.date || new Date().toISOString().split("T")[0],
-        },
-      }
-      setMessages((prev) => [...prev, msg])
-    } else if (result.action === "ask_category") {
-      setPendingAskCategory(result)
-      const cats = result.categories || EXPENSE_CATEGORIES
-      const msg: ChatMessage = {
-        role: "assistant",
-        content: `I detected ${result.amount} CHF (${result.type}). Which category?`,
-        timestamp: new Date(),
-        categoryOptions: cats,
-      }
-      setMessages((prev) => [...prev, msg])
-    } else if (result.action === "add_savings") {
-      if (result.saved) {
+      if (result.action === "add_transaction") {
         const msg: ChatMessage = {
           role: "assistant",
-          content: `Added ${result.amount} CHF to your savings goal.`,
+          content: `Add ${result.amount} CHF ${result.type} in ${result.category}?`,
           timestamp: new Date(),
+          pendingTransaction: {
+            type: result.type!,
+            amount: result.amount!,
+            category: result.category!,
+            description: result.description || "",
+            date: new Date().toISOString().split("T")[0],
+          },
         }
         setMessages((prev) => [...prev, msg])
-        onTransactionAdded?.()
+      } else if (result.action === "ask_category") {
+        const cats = result.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+        const msg: ChatMessage = {
+          role: "assistant",
+          content: `I detected ${result.amount} CHF (${result.type}). Which category?`,
+          timestamp: new Date(),
+          categoryOptions: cats,
+          pendingCategory: {
+            type: result.type!,
+            amount: result.amount!,
+            description: result.description || "",
+          },
+        }
+        setMessages((prev) => [...prev, msg])
       } else {
         const msg: ChatMessage = {
           role: "assistant",
-          content: result.message || "Could not find that savings goal.",
+          content: getSimulatedResponse(userText),
           timestamp: new Date(),
         }
         setMessages((prev) => [...prev, msg])
@@ -153,70 +119,97 @@ export function ChatPanel({
     } else {
       const msg: ChatMessage = {
         role: "assistant",
-        content: result.message || "I'm here to help with your finances. Try telling me about your spending or income.",
+        content: getSimulatedResponse(userText),
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, msg])
     }
+
+    setIsLoading(false)
+    onSpeakingChange?.(false)
+    scrollToBottom()
   }
 
-  async function handleCategorySelect(category: string) {
-    if (!pendingAskCategory) return
+  async function handleCategorySelect(category: string, msgIndex: number) {
+    const msg = messages[msgIndex]
+    if (!msg.pendingCategory) return
     setIsLoading(true)
 
     try {
       const tx = await addTransaction({
-        type: pendingAskCategory.type || "expense",
-        amount: pendingAskCategory.amount!,
+        type: msg.pendingCategory.type,
+        amount: msg.pendingCategory.amount,
         category,
-        description: pendingAskCategory.description || "",
-        date: pendingAskCategory.date || new Date().toISOString().split("T")[0],
+        description: msg.pendingCategory.description,
+        date: new Date().toISOString().split("T")[0],
       })
-
-      const msg: ChatMessage = {
-        role: "assistant",
-        content: `Added ${tx.amount} CHF ${tx.type} in ${tx.category}.`,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, msg])
-      onTransactionAdded?.()
-    } catch {
-      const msg: ChatMessage = {
-        role: "assistant",
-        content: "Failed to add transaction. Is the backend running?",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, msg])
-    }
-
-    setPendingAskCategory(null)
-    setIsLoading(false)
-    scrollToBottom()
-  }
-
-  async function handleConfirmTransaction(tx: ChatMessage["pendingTransaction"]) {
-    if (!tx) return
-    setIsLoading(true)
-
-    try {
-      await addTransaction(tx)
-      const msg: ChatMessage = {
+      const confirmMsg: ChatMessage = {
         role: "assistant",
         content: `Done! Added ${tx.amount} CHF ${tx.type} in ${tx.category}.`,
         timestamp: new Date(),
       }
-      setMessages((prev) => [...prev, msg])
+      // Remove categoryOptions from the original message to prevent re-selection
+      setMessages((prev) => {
+        const updated = [...prev]
+        updated[msgIndex] = { ...updated[msgIndex], categoryOptions: undefined, pendingCategory: undefined }
+        return [...updated, confirmMsg]
+      })
       onTransactionAdded?.()
     } catch {
-      const msg: ChatMessage = {
+      const errorMsg: ChatMessage = {
+        role: "assistant",
+        content: "Failed to add transaction. Please try again.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMsg])
+    }
+
+    setIsLoading(false)
+    scrollToBottom()
+  }
+
+  async function handleConfirmTransaction(msgIndex: number) {
+    const msg = messages[msgIndex]
+    if (!msg.pendingTransaction) return
+    setIsLoading(true)
+
+    try {
+      await addTransaction(msg.pendingTransaction)
+      const confirmMsg: ChatMessage = {
+        role: "assistant",
+        content: `Done! Added ${msg.pendingTransaction.amount} CHF ${msg.pendingTransaction.type} in ${msg.pendingTransaction.category}.`,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => {
+        const updated = [...prev]
+        updated[msgIndex] = { ...updated[msgIndex], pendingTransaction: undefined }
+        return [...updated, confirmMsg]
+      })
+      onTransactionAdded?.()
+    } catch {
+      const errorMsg: ChatMessage = {
         role: "assistant",
         content: "Failed to add transaction.",
         timestamp: new Date(),
       }
-      setMessages((prev) => [...prev, msg])
+      setMessages((prev) => [...prev, errorMsg])
     }
 
     setIsLoading(false)
+    scrollToBottom()
+  }
+
+  function handleCancelTransaction(msgIndex: number) {
+    const cancelMsg: ChatMessage = {
+      role: "assistant",
+      content: "Cancelled.",
+      timestamp: new Date(),
+    }
+    setMessages((prev) => {
+      const updated = [...prev]
+      updated[msgIndex] = { ...updated[msgIndex], pendingTransaction: undefined }
+      return [...updated, cancelMsg]
+    })
     scrollToBottom()
   }
 
@@ -251,7 +244,7 @@ export function ChatPanel({
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
             {useFinanceAI
-              ? "Tell me about your spending or income..."
+              ? "Try: 'I spent 45 CHF on food' or 'Earned 3000 salary'"
               : "Start a conversation..."}
           </div>
         )}
@@ -271,13 +264,13 @@ export function ChatPanel({
             </div>
 
             {/* Category selection buttons */}
-            {msg.categoryOptions && pendingAskCategory && (
+            {msg.categoryOptions && msg.pendingCategory && (
               <div className="flex flex-wrap gap-1.5 mt-2 ml-1">
                 {msg.categoryOptions.map((cat) => (
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => handleCategorySelect(cat)}
+                    onClick={() => handleCategorySelect(cat, i)}
                     className="rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-medium text-secondary-foreground active:scale-95 transition-transform cursor-pointer hover:bg-primary hover:text-primary-foreground"
                   >
                     {cat}
@@ -291,21 +284,14 @@ export function ChatPanel({
               <div className="flex gap-2 mt-2 ml-1">
                 <button
                   type="button"
-                  onClick={() => handleConfirmTransaction(msg.pendingTransaction)}
+                  onClick={() => handleConfirmTransaction(i)}
                   className="flex items-center gap-1 rounded-md bg-accent px-2.5 py-1 text-[10px] font-medium text-accent-foreground active:scale-95 transition-transform cursor-pointer"
                 >
                   <Check className="w-3 h-3" /> Confirm
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    const cancelMsg: ChatMessage = {
-                      role: "assistant",
-                      content: "Cancelled.",
-                      timestamp: new Date(),
-                    }
-                    setMessages((prev) => [...prev, cancelMsg])
-                  }}
+                  onClick={() => handleCancelTransaction(i)}
                   className="flex items-center gap-1 rounded-md bg-destructive px-2.5 py-1 text-[10px] font-medium text-destructive-foreground active:scale-95 transition-transform cursor-pointer"
                 >
                   <X className="w-3 h-3" /> Cancel
@@ -397,19 +383,16 @@ export function ChatPanel({
 function getSimulatedResponse(input: string): string {
   const lower = input.toLowerCase()
   if (lower.includes("weather")) {
-    return "Currently 12C and cloudy in Zurich. Expected to clear up this afternoon with highs of 16C."
+    return "Currently 12C and cloudy in Zurich. Expected to clear up this afternoon."
   }
   if (lower.includes("time")) {
     return `The current time is ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}.`
   }
-  if (lower.includes("light") || lower.includes("home")) {
-    return "I can help control your smart home devices. Try saying 'turn on living room lights' or 'set thermostat to 22C'."
-  }
   if (lower.includes("hello") || lower.includes("hi")) {
-    return "Hello! I'm your Pi Assistant. I can help with weather, smart home controls, finance tracking, and more. How can I help?"
+    return "Hello! I'm your Pi Assistant. Try telling me about your spending, like 'I spent 45 CHF on food' and I'll track it for you!"
   }
-  if (lower.includes("spent") || lower.includes("earned") || lower.includes("paid") || lower.includes("income") || lower.includes("expense")) {
-    return "I detected a finance-related message. Connect me to your Proxmox backend to automatically track your transactions!"
+  if (lower.includes("help")) {
+    return "I can track your finances! Try: 'Spent 30 on groceries', 'Earned 5000 salary', 'Paid 120 for insurance'. I'll detect the amount and category automatically."
   }
-  return "I understand your request. Connect the Proxmox backend for full AI-powered responses. Try asking about the weather, time, or home controls."
+  return "I'm here to help track your finances. Try saying something like 'I spent 25 CHF on coffee' or 'Earned 3000 from salary'."
 }
