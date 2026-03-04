@@ -44,7 +44,7 @@ function exitDashboard() {
 export function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
-  const { refreshAll, isConnected } = useFinance()
+  const { refreshAll } = useFinance()
 
   return (
     <div className="relative w-full h-full">
@@ -88,8 +88,8 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
             <ChatPanel
               compact
               onSpeakingChange={setIsSpeaking}
-              placeholder={isConnected ? "Tell me about your spending..." : "Ask your Pi Assistant..."}
-              useFinanceAI={isConnected}
+              placeholder="Tell me about your spending..."
+              useFinanceAI
               onTransactionAdded={refreshAll}
             />
           </div>

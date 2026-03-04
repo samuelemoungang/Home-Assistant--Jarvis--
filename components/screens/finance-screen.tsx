@@ -2,8 +2,6 @@
 
 import { TrendingUp, PieChart, Landmark, FileText, ArrowLeft } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
-import { AvatarDisplay } from "@/components/dashboard/avatar-display"
-import { useFinance } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
 
 interface FinanceScreenProps {
@@ -11,7 +9,6 @@ interface FinanceScreenProps {
 }
 
 export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
-  const { isConnected } = useFinance()
 
   const items = [
     { label: "Income / Expenses", icon: TrendingUp, target: "income" as Screen },
@@ -35,9 +32,9 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
 
       {/* Connection status pill */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-glass-border bg-glass backdrop-blur-xl px-3 py-1.5">
-        <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-accent" : "bg-destructive"}`} />
+        <div className="w-2 h-2 rounded-full bg-accent" />
         <span className="text-[10px] text-muted-foreground">
-          {isConnected ? "Connected" : "Offline"}
+          Supabase
         </span>
       </div>
 

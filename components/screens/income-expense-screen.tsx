@@ -18,7 +18,7 @@ const INCOME_CATEGORIES = ["Salary", "Freelance", "Investment", "Gift", "Refund"
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"]
 
 export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
-  const { transactions, currentMonth, addTransaction, deleteTransaction, isConnected } = useFinance()
+  const { transactions, currentMonth, addTransaction, deleteTransaction } = useFinance()
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<"income" | "expense">("expense")
   const [formAmount, setFormAmount] = useState("")
@@ -82,21 +82,6 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
   }
 
   const categories = formType === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
-
-  if (!isConnected) {
-    return (
-      <div className="relative w-full h-full p-4 flex items-center justify-center">
-        <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
-          <ArrowLeft className="w-5 h-5 text-primary" />
-          <span className="text-xs font-medium text-foreground">Back</span>
-        </GlassCard>
-        <div className="text-center">
-          <p className="text-foreground font-medium">Backend Offline</p>
-          <p className="text-sm text-muted-foreground mt-1">Connect to your Proxmox server to see data.</p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="relative w-full h-full p-4">

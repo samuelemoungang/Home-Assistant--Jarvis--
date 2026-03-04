@@ -14,7 +14,7 @@ interface BudgetsScreenProps {
 const BUDGET_COLORS = ["#38bdf8", "#34d399", "#818cf8", "#fbbf24", "#f472b6", "#a78bfa"]
 
 export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
-  const { budgets, addBudget, deleteBudget, isConnected } = useFinance()
+  const { budgets, addBudget, deleteBudget } = useFinance()
   const [showForm, setShowForm] = useState(false)
   const [formCategory, setFormCategory] = useState("")
   const [formLimit, setFormLimit] = useState("")
@@ -27,28 +27,12 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
       await addBudget({
         category: formCategory,
         monthly_limit: parseFloat(formLimit),
-        color: BUDGET_COLORS[budgets.length % BUDGET_COLORS.length],
       })
       setShowForm(false)
       setFormCategory("")
       setFormLimit("")
     } catch { /* */ }
     setSubmitting(false)
-  }
-
-  if (!isConnected) {
-    return (
-      <div className="relative w-full h-full p-4 flex items-center justify-center">
-        <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
-          <ArrowLeft className="w-5 h-5 text-primary" />
-          <span className="text-xs font-medium text-foreground">Back</span>
-        </GlassCard>
-        <div className="text-center">
-          <p className="text-foreground font-medium">Backend Offline</p>
-          <p className="text-sm text-muted-foreground mt-1">Connect to your Proxmox server to see data.</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -71,16 +55,17 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
           {budgets.length === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-8">No budgets set. Tap Add to create one.</p>
           )}
-          {budgets.map((b) => {
+          {budgets.map((b, idx) => {
             const percent = b.monthly_limit > 0 ? Math.round((b.spent / b.monthly_limit) * 100) : 0
             const isOver = percent > 100
             const isWarning = percent >= 90
+            const color = BUDGET_COLORS[idx % BUDGET_COLORS.length]
 
             return (
               <div key={b.id} className="rounded-lg border border-glass-border bg-glass backdrop-blur-xl p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: b.color }} />
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
                     <span className="text-sm font-medium text-foreground">{b.category}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -106,7 +91,7 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
                     )}
                     style={{
                       width: `${Math.min(percent, 100)}%`,
-                      background: !isOver && !isWarning ? b.color : undefined,
+                      background: !isOver && !isWarning ? color : undefined,
                     }}
                   />
                 </div>

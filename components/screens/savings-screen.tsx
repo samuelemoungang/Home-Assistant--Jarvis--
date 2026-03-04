@@ -13,9 +13,9 @@ interface SavingsScreenProps {
 const SAVINGS_COLORS = ["#38bdf8", "#34d399", "#818cf8", "#fbbf24", "#f472b6"]
 
 export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
-  const { savings, addSavingsGoal, addFundsToSavings, deleteSavingsGoal, isConnected } = useFinance()
+  const { savings, addSavingsGoal, addFundsToSavings, deleteSavingsGoal } = useFinance()
   const [showForm, setShowForm] = useState(false)
-  const [showFundForm, setShowFundForm] = useState<number | null>(null)
+  const [showFundForm, setShowFundForm] = useState<string | null>(null)
   const [formName, setFormName] = useState("")
   const [formTarget, setFormTarget] = useState("")
   const [fundAmount, setFundAmount] = useState("")
@@ -31,7 +31,6 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
       await addSavingsGoal({
         name: formName,
         target_amount: parseFloat(formTarget),
-        color: SAVINGS_COLORS[savings.length % SAVINGS_COLORS.length],
       })
       setShowForm(false)
       setFormName("")
@@ -49,21 +48,6 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
       setFundAmount("")
     } catch { /* */ }
     setSubmitting(false)
-  }
-
-  if (!isConnected) {
-    return (
-      <div className="relative w-full h-full p-4 flex items-center justify-center">
-        <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
-          <ArrowLeft className="w-5 h-5 text-primary" />
-          <span className="text-xs font-medium text-foreground">Back</span>
-        </GlassCard>
-        <div className="text-center">
-          <p className="text-foreground font-medium">Backend Offline</p>
-          <p className="text-sm text-muted-foreground mt-1">Connect to your Proxmox server to see data.</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -96,9 +80,10 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
           {savings.length === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-8">No savings goals yet. Tap Add to create one.</p>
           )}
-          {savings.map((goal) => {
+          {savings.map((goal, idx) => {
             const percent = goal.target_amount > 0 ? Math.round((goal.current_amount / goal.target_amount) * 100) : 0
             const isComplete = percent >= 100
+            const color = SAVINGS_COLORS[idx % SAVINGS_COLORS.length]
 
             return (
               <div key={goal.id} className="rounded-lg border border-glass-border bg-glass backdrop-blur-xl p-3">
@@ -129,7 +114,7 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
                 <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${Math.min(percent, 100)}%`, background: goal.color }}
+                    style={{ width: `${Math.min(percent, 100)}%`, background: color }}
                   />
                 </div>
                 <div className="flex justify-end mt-1">
