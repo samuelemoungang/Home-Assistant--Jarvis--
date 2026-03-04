@@ -8,13 +8,12 @@ import { useState, useMemo } from "react"
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
 } from "recharts"
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/categories"
 
 interface IncomeExpenseScreenProps {
   onNavigate: (screen: Screen) => void
 }
 
-const EXPENSE_CATEGORIES = ["Food", "Transport", "Housing", "Utilities", "Entertainment", "Health", "Shopping", "Education", "Insurance", "Other"]
-const INCOME_CATEGORIES = ["Salary", "Freelance", "Investment", "Gift", "Refund", "Other"]
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"]
 
 export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
