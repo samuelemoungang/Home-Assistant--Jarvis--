@@ -1,0 +1,19 @@
+{
+  "name": "pi-dashboard-backend",
+  "version": "1.0.0",
+  "description": "Proxmox backend for Pi Dashboard - Express + SQLite",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.0",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.3"
+  }
+}

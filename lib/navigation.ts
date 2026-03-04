@@ -1,4 +1,4 @@
-export type Screen = "home" | "finance" | "offline-ai" | "income" | "budgets" | "savings"
+export type Screen = "home" | "finance" | "offline-ai" | "income" | "budgets" | "savings" | "reports"
 
 export const screens = {
   home: {

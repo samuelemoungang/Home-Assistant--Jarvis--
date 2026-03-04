@@ -1,10 +1,11 @@
 "use client"
 
-import { DollarSign, Home, Bot, Monitor, LogOut } from "lucide-react"
+import { DollarSign, Home, Bot, LogOut } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { AvatarDisplay } from "@/components/dashboard/avatar-display"
 import { WeatherTime } from "@/components/dashboard/weather-time"
 import { ChatPanel } from "@/components/dashboard/chat-panel"
+import { useFinance } from "@/lib/finance-context"
 import { useState } from "react"
 import type { Screen } from "@/lib/navigation"
 
@@ -38,6 +39,7 @@ function exitDashboard() {
 export function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const { refreshAll, isConnected } = useFinance()
 
   return (
     <div className="relative w-full h-full">
@@ -81,7 +83,9 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
             <ChatPanel
               compact
               onSpeakingChange={setIsSpeaking}
-              placeholder="Ask your Pi Assistant..."
+              placeholder={isConnected ? "Tell me about your spending..." : "Ask your Pi Assistant..."}
+              useFinanceAI={isConnected}
+              onTransactionAdded={refreshAll}
             />
           </div>
         </div>

@@ -6,9 +6,11 @@ import { FinanceScreen } from "@/components/screens/finance-screen"
 import { IncomeExpenseScreen } from "@/components/screens/income-expense-screen"
 import { BudgetsScreen } from "@/components/screens/budgets-screen"
 import { SavingsScreen } from "@/components/screens/savings-screen"
+import { ReportsScreen } from "@/components/screens/reports-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
 import { GestureOverlay } from "@/components/dashboard/gesture-overlay"
 import { AutoRefresh } from "@/components/dashboard/auto-refresh"
+import { FinanceProvider } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
@@ -36,6 +38,8 @@ export default function DashboardPage() {
         return <BudgetsScreen onNavigate={navigateTo} />
       case "savings":
         return <SavingsScreen onNavigate={navigateTo} />
+      case "reports":
+        return <ReportsScreen onNavigate={navigateTo} />
       case "offline-ai":
         return <OfflineAIScreen onNavigate={navigateTo} />
       default:
@@ -44,36 +48,38 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="relative w-screen h-screen bg-background overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] rounded-full bg-accent/5 blur-[80px]" />
-        <div className="absolute top-0 right-0 w-[150px] h-[150px] rounded-full bg-chart-3/5 blur-[60px]" />
-      </div>
+    <FinanceProvider>
+      <main className="relative w-screen h-screen bg-background overflow-hidden">
+        {/* Ambient background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
+          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] rounded-full bg-accent/5 blur-[80px]" />
+          <div className="absolute top-0 right-0 w-[150px] h-[150px] rounded-full bg-chart-3/5 blur-[60px]" />
+        </div>
 
-      {/* Screen content */}
-      <div
-        className={cn(
-          "relative w-full h-full transition-opacity duration-200",
-          isTransitioning ? "opacity-0" : "opacity-100"
-        )}
-      >
-        {renderScreen()}
-      </div>
+        {/* Screen content */}
+        <div
+          className={cn(
+            "relative w-full h-full transition-opacity duration-200",
+            isTransitioning ? "opacity-0" : "opacity-100"
+          )}
+        >
+          {renderScreen()}
+        </div>
 
-      {/* Gesture overlay */}
-      <GestureOverlay onNavigate={navigateTo} />
+        {/* Gesture overlay */}
+        <GestureOverlay onNavigate={navigateTo} />
 
-      {/* Auto-refresh on new deploys */}
-      <AutoRefresh />
+        {/* Auto-refresh on new deploys */}
+        <AutoRefresh />
 
-      {/* Screen indicator */}
-      <div className="fixed top-2 right-2 z-50">
-        <span className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-widest">
-          {currentScreen.replace("-", " ")}
-        </span>
-      </div>
-    </main>
+        {/* Screen indicator */}
+        <div className="fixed top-2 right-2 z-50">
+          <span className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-widest">
+            {currentScreen.replace("-", " ")}
+          </span>
+        </div>
+      </main>
+    </FinanceProvider>
   )
 }

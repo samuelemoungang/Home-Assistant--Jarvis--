@@ -1,33 +1,66 @@
 "use client"
 
-import { ArrowLeft, AlertTriangle } from "lucide-react"
+import { ArrowLeft, AlertTriangle, Plus, X, Trash2 } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
+import { useFinance } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 interface BudgetsScreenProps {
   onNavigate: (screen: Screen) => void
 }
 
-const budgets = [
-  { category: "Food", budget: 300, spent: 300, color: "var(--chart-1)" },
-  { category: "Transport", budget: 200, spent: 120, color: "var(--chart-2)" },
-  { category: "Entertainment", budget: 150, spent: 180, color: "var(--chart-5)" },
-  { category: "Clothing", budget: 100, spent: 45, color: "var(--chart-3)" },
-  { category: "Extras", budget: 200, spent: 160, color: "var(--chart-4)" },
-  { category: "Utilities", budget: 250, spent: 230, color: "var(--accent)" },
-]
+const BUDGET_COLORS = ["#38bdf8", "#34d399", "#818cf8", "#fbbf24", "#f472b6", "#a78bfa"]
 
 export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
+  const { budgets, addBudget, deleteBudget, isConnected } = useFinance()
+  const [showForm, setShowForm] = useState(false)
+  const [formCategory, setFormCategory] = useState("")
+  const [formLimit, setFormLimit] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit() {
+    if (!formCategory || !formLimit) return
+    setSubmitting(true)
+    try {
+      await addBudget({
+        category: formCategory,
+        monthly_limit: parseFloat(formLimit),
+        color: BUDGET_COLORS[budgets.length % BUDGET_COLORS.length],
+      })
+      setShowForm(false)
+      setFormCategory("")
+      setFormLimit("")
+    } catch { /* */ }
+    setSubmitting(false)
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="relative w-full h-full p-4 flex items-center justify-center">
+        <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
+          <ArrowLeft className="w-5 h-5 text-primary" />
+          <span className="text-xs font-medium text-foreground">Back</span>
+        </GlassCard>
+        <div className="text-center">
+          <p className="text-foreground font-medium">Backend Offline</p>
+          <p className="text-sm text-muted-foreground mt-1">Connect to your Proxmox server to see data.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative w-full h-full p-4">
-      {/* Back button */}
-      <GlassCard
-        position="bottom-right"
-        onClick={() => onNavigate("finance")}
-      >
+      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
         <ArrowLeft className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Back</span>
+      </GlassCard>
+
+      <GlassCard position="top-right" onClick={() => setShowForm(true)}>
+        <Plus className="w-5 h-5 text-primary" />
+        <span className="text-xs font-medium text-foreground">Add</span>
       </GlassCard>
 
       <div className="flex flex-col items-center gap-4 h-full max-w-lg mx-auto">
@@ -35,13 +68,16 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
         <p className="text-xs text-muted-foreground">Track your spending against set limits</p>
 
         <div className="w-full flex-1 overflow-y-auto space-y-3 pr-2">
+          {budgets.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center mt-8">No budgets set. Tap Add to create one.</p>
+          )}
           {budgets.map((b) => {
-            const percent = Math.round((b.spent / b.budget) * 100)
+            const percent = b.monthly_limit > 0 ? Math.round((b.spent / b.monthly_limit) * 100) : 0
             const isOver = percent > 100
             const isWarning = percent >= 90
 
             return (
-              <div key={b.category} className="rounded-lg border border-glass-border bg-glass backdrop-blur-xl p-3">
+              <div key={b.id} className="rounded-lg border border-glass-border bg-glass backdrop-blur-xl p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: b.color }} />
@@ -49,14 +85,17 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     {(isOver || isWarning) && (
-                      <AlertTriangle className={cn(
-                        "w-3.5 h-3.5",
-                        isOver ? "text-destructive" : "text-chart-4"
-                      )} />
+                      <AlertTriangle className={cn("w-3.5 h-3.5", isOver ? "text-destructive" : "text-chart-4")} />
                     )}
-                    <span className="text-xs text-muted-foreground">
-                      {b.spent} / {b.budget} CHF
-                    </span>
+                    <span className="text-xs text-muted-foreground">{b.spent.toFixed(0)} / {b.monthly_limit} CHF</span>
+                    <button
+                      type="button"
+                      onClick={() => deleteBudget(b.id)}
+                      className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                      aria-label={`Delete budget ${b.category}`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
                 <div className="h-2 rounded-full bg-secondary overflow-hidden">
@@ -72,10 +111,7 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
                   />
                 </div>
                 <div className="flex justify-end mt-1">
-                  <span className={cn(
-                    "text-[10px] font-mono",
-                    isOver ? "text-destructive" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-[10px] font-mono", isOver ? "text-destructive" : "text-muted-foreground")}>
                     {percent}%{isOver && " - Over budget!"}
                   </span>
                 </div>
@@ -84,6 +120,43 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
           })}
         </div>
       </div>
+
+      {/* Add Budget Form */}
+      {showForm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="rounded-xl border border-glass-border bg-card p-5 w-[300px] flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Add Budget</h3>
+              <button type="button" onClick={() => setShowForm(false)} className="p-1 cursor-pointer" aria-label="Close form">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Category name"
+              value={formCategory}
+              onChange={(e) => setFormCategory(e.target.value)}
+              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="Monthly limit (CHF)"
+              value={formLimit}
+              onChange={(e) => setFormLimit(e.target.value)}
+              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!formCategory || !formLimit || submitting}
+              className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform cursor-pointer"
+            >
+              {submitting ? "Adding..." : "Add Budget"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
