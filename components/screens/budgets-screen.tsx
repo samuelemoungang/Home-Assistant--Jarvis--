@@ -3,8 +3,9 @@
 import { ArrowLeft, AlertTriangle, Plus, X, Trash2 } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { useFinance } from "@/lib/finance-context"
+import { EXPENSE_CATEGORIES } from "@/lib/categories"
 import type { Screen } from "@/lib/navigation"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 
 interface BudgetsScreenProps {
@@ -19,6 +20,18 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
   const [formCategory, setFormCategory] = useState("")
   const [formLimit, setFormLimit] = useState("")
   const [submitting, setSubmitting] = useState(false)
+
+  // Categories already budgeted (disabled in picker)
+  const budgetedCategories = useMemo(
+    () => new Set(budgets.map((b) => b.category)),
+    [budgets]
+  )
+
+  // Available categories = EXPENSE_CATEGORIES that are not yet budgeted
+  const availableCategories = useMemo(
+    () => EXPENSE_CATEGORIES.filter((c) => !budgetedCategories.has(c)),
+    [budgetedCategories]
+  )
 
   async function handleSubmit() {
     if (!formCategory || !formLimit) return
@@ -109,20 +122,50 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
       {/* Add Budget Form */}
       {showForm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="rounded-xl border border-glass-border bg-card p-5 w-[300px] flex flex-col gap-3">
+          <div className="rounded-xl border border-glass-border bg-card p-5 w-[340px] flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Add Budget</h3>
-              <button type="button" onClick={() => setShowForm(false)} className="p-1 cursor-pointer" aria-label="Close form">
+              <button type="button" onClick={() => { setShowForm(false); setFormCategory(""); }} className="p-1 cursor-pointer" aria-label="Close form">
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="Category name"
-              value={formCategory}
-              onChange={(e) => setFormCategory(e.target.value)}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
-            />
+
+            {/* Category Chip Picker */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Select a category</p>
+              {availableCategories.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">All categories have budgets already.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto">
+                  {EXPENSE_CATEGORIES.map((cat) => {
+                    const isBudgeted = budgetedCategories.has(cat)
+                    const isSelected = formCategory === cat
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        disabled={isBudgeted}
+                        onClick={() => setFormCategory(isSelected ? "" : cat)}
+                        className={cn(
+                          "rounded-full px-3.5 py-2 text-xs font-medium transition-all cursor-pointer",
+                          "border active:scale-95",
+                          isBudgeted
+                            ? "border-border bg-secondary/50 text-muted-foreground/40 cursor-not-allowed line-through"
+                            : isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-secondary text-secondary-foreground hover:border-primary/50"
+                        )}
+                        aria-label={isBudgeted ? `${cat} already has a budget` : `Select ${cat}`}
+                      >
+                        {cat}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Monthly Limit */}
             <input
               type="number"
               inputMode="decimal"
@@ -131,13 +174,14 @@ export function BudgetsScreen({ onNavigate }: BudgetsScreenProps) {
               onChange={(e) => setFormLimit(e.target.value)}
               className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
             />
+
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!formCategory || !formLimit || submitting}
               className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform cursor-pointer"
             >
-              {submitting ? "Adding..." : "Add Budget"}
+              {submitting ? "Adding..." : `Add Budget for ${formCategory || "..."}`}
             </button>
           </div>
         </div>

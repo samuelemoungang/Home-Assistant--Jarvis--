@@ -10,6 +10,7 @@ import { ReportsScreen } from "@/components/screens/reports-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
 import { GestureOverlay } from "@/components/dashboard/gesture-overlay"
 import { AutoRefresh } from "@/components/dashboard/auto-refresh"
+import { HandDetectionIndicator } from "@/components/dashboard/hand-detection-indicator"
 import { FinanceProvider } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
@@ -69,6 +70,9 @@ export default function DashboardPage() {
 
         {/* Gesture overlay */}
         <GestureOverlay onNavigate={navigateTo} />
+
+        {/* Hand detection indicator (visible on non-home screens) */}
+        {currentScreen !== "home" && <HandDetectionIndicator />}
 
         {/* Auto-refresh on new deploys */}
         <AutoRefresh />
