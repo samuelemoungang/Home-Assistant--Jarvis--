@@ -3,11 +3,16 @@
 import { DollarSign, Home, Bot, LogOut } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { AvatarDisplay } from "@/components/dashboard/avatar-display"
-import { WeatherTime } from "@/components/dashboard/weather-time"
 import { ChatPanel } from "@/components/dashboard/chat-panel"
 import { useFinance } from "@/lib/finance-context"
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import type { Screen } from "@/lib/navigation"
+
+const WeatherTime = dynamic(
+  () => import("@/components/dashboard/weather-time").then((mod) => mod.WeatherTime),
+  { ssr: false, loading: () => <div className="h-[72px]" /> }
+)
 
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void
