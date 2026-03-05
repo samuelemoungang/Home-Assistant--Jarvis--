@@ -9,6 +9,7 @@ import { SavingsScreen } from "@/components/screens/savings-screen"
 import { ReportsScreen } from "@/components/screens/reports-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
 import { AutoRefresh } from "@/components/dashboard/auto-refresh"
+import { HandDetectionIndicator } from "@/components/dashboard/hand-detection-indicator"
 import { FinanceProvider } from "@/lib/finance-context"
 import { useGestureControl } from "@/hooks/use-gesture-control"
 import type { Screen } from "@/lib/navigation"
@@ -145,6 +146,9 @@ export default function DashboardPage() {
             {handDetected && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
           </div>
         )}
+
+        {/* Hand detection indicator (visible on non-home screens) */}
+        {currentScreen !== "home" && <HandDetectionIndicator />}
 
         {/* Auto-refresh on new deploys */}
         <AutoRefresh />
