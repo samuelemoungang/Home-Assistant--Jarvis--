@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { HomeScreen } from "@/components/screens/home-screen"
 import { FinanceScreen } from "@/components/screens/finance-screen"
 import { IncomeExpenseScreen } from "@/components/screens/income-expense-screen"
@@ -8,16 +8,17 @@ import { BudgetsScreen } from "@/components/screens/budgets-screen"
 import { SavingsScreen } from "@/components/screens/savings-screen"
 import { ReportsScreen } from "@/components/screens/reports-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
-import { GestureOverlay } from "@/components/dashboard/gesture-overlay"
 import { AutoRefresh } from "@/components/dashboard/auto-refresh"
-import { HandDetectionIndicator } from "@/components/dashboard/hand-detection-indicator"
 import { FinanceProvider } from "@/lib/finance-context"
+import { useGestureControl } from "@/hooks/use-gesture-control"
 import type { Screen } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
+import { Hand } from "lucide-react"
 
 export default function DashboardPage() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("home")
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [cameraActive, setCameraActive] = useState(false)
 
   const navigateTo = useCallback((screen: Screen) => {
     setIsTransitioning(true)
@@ -27,10 +28,65 @@ export default function DashboardPage() {
     }, 200)
   }, [])
 
+  // Handle gesture navigation events
+  const handleGestureNavigate = useCallback((target: string, fingers: number) => {
+    // Map targets to screens
+    const screenMap: Record<string, Screen> = {
+      // Main gesture mode (home)
+      "finance": "finance",
+      "home": "home",
+      "offline-ai": "offline-ai",
+      "exit": "home", // 4 fingers on home = do nothing or could show exit
+      // Finance gesture mode
+      "income": "income",
+      "budgets": "budgets",
+      "savings": "savings",
+      "reports": "reports",
+    }
+    
+    if (target === "exit" && currentScreen === "home") {
+      // Could trigger exit confirmation here
+      return
+    }
+    
+    const screen = screenMap[target]
+    if (screen) {
+      navigateTo(screen)
+    }
+  }, [navigateTo, currentScreen])
+
+  const {
+    connected: gestureConnected,
+    currentMode,
+    handDetected,
+    switchToGestureMode,
+    switchToCameraMode,
+    switchToFinanceMode,
+  } = useGestureControl({
+    onNavigate: handleGestureNavigate,
+    enabled: true,
+  })
+
+  // Switch gesture modes based on current screen
+  useEffect(() => {
+    if (currentScreen === "finance") {
+      switchToFinanceMode()
+    } else if (cameraActive) {
+      switchToCameraMode()
+    } else {
+      switchToGestureMode()
+    }
+  }, [currentScreen, cameraActive, switchToFinanceMode, switchToCameraMode, switchToGestureMode])
+
+  // Camera toggle callback for HomeScreen
+  const handleCameraToggle = useCallback((active: boolean) => {
+    setCameraActive(active)
+  }, [])
+
   const renderScreen = () => {
     switch (currentScreen) {
       case "home":
-        return <HomeScreen onNavigate={navigateTo} />
+        return <HomeScreen onNavigate={navigateTo} onCameraToggle={handleCameraToggle} />
       case "finance":
         return <FinanceScreen onNavigate={navigateTo} />
       case "income":
@@ -44,7 +100,7 @@ export default function DashboardPage() {
       case "offline-ai":
         return <OfflineAIScreen onNavigate={navigateTo} />
       default:
-        return <HomeScreen onNavigate={navigateTo} />
+        return <HomeScreen onNavigate={navigateTo} onCameraToggle={handleCameraToggle} />
     }
   }
 
@@ -68,11 +124,27 @@ export default function DashboardPage() {
           {renderScreen()}
         </div>
 
-        {/* Gesture overlay */}
-        <GestureOverlay onNavigate={navigateTo} />
-
-        {/* Hand detection indicator (visible on non-home screens) */}
-        {currentScreen !== "home" && <HandDetectionIndicator />}
+        {/* Hand detection indicator (global, shows on all screens) */}
+        {gestureConnected && (
+          <div className={cn(
+            "fixed bottom-3 left-3 z-50 flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-all duration-300",
+            handDetected 
+              ? "border-primary/50 bg-primary/10" 
+              : "border-glass-border bg-glass/50 backdrop-blur-sm"
+          )}>
+            <Hand className={cn(
+              "w-3.5 h-3.5 transition-colors",
+              handDetected ? "text-primary" : "text-muted-foreground/50"
+            )} />
+            <span className={cn(
+              "text-[9px] font-medium transition-colors",
+              handDetected ? "text-primary" : "text-muted-foreground/50"
+            )}>
+              {handDetected ? "Hand Detected" : (gestureConnected ? currentMode : "Offline")}
+            </span>
+            {handDetected && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+          </div>
+        )}
 
         {/* Auto-refresh on new deploys */}
         <AutoRefresh />
