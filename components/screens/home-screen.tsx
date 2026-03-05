@@ -17,6 +17,7 @@ const WeatherTime = dynamic(
 
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void
+  onCameraToggle?: (active: boolean) => void
 }
 
 type ExpandedCard = "pi-stats" | "temperature" | "humidity" | "camera" | null
@@ -28,11 +29,19 @@ function exitDashboard() {
   }, 300)
 }
 
-export function HomeScreen({ onNavigate }: HomeScreenProps) {
+export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [expanded, setExpanded] = useState<ExpandedCard>(null)
   const { refreshAll } = useFinance()
+
+  // Notify parent when camera is expanded/collapsed
+  const handleSetExpanded = useCallback((card: ExpandedCard) => {
+    setExpanded(card)
+    if (onCameraToggle) {
+      onCameraToggle(card === "camera")
+    }
+  }, [onCameraToggle])
   const { stats, sensors, connected } = usePiStats()
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didLongPress = useRef(false)
@@ -41,9 +50,9 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
     didLongPress.current = false
     longPressTimer.current = setTimeout(() => {
       didLongPress.current = true
-      setExpanded(key)
+      handleSetExpanded(key)
     }, 500)
-  }, [])
+  }, [handleSetExpanded])
 
   const handleTouchEnd = useCallback(() => {
     if (longPressTimer.current) {
@@ -174,7 +183,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
                 src="http://localhost:8081/stream"
                 alt="Camera feed from IMX500"
                 className="w-full rounded-lg border border-border bg-secondary"
-                style={{ maxHeight: 480 }}
+                style={{ maxHeight: 200 }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none"
                   const p = (e.target as HTMLImageElement).nextElementSibling
@@ -251,22 +260,14 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
       {/* Bottom navigation */}
       <BottomNav onNavigate={onNavigate} onExit={() => setShowExitConfirm(true)} />
 
-      {/* Hand detection indicator */}
-      {connected && stats?.hand_detected && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full border border-primary/30 bg-glass backdrop-blur-xl px-2.5 py-1">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-[9px] font-medium text-primary">Hand Detected</span>
-        </div>
-      )}
-
       {/* Expanded card overlay */}
       {expanded && expandedContent[expanded] && (
         <div
           className="absolute inset-0 z-40 flex items-center justify-center bg-background/70 backdrop-blur-sm"
-          onClick={() => setExpanded(null)}
+          onClick={() => handleSetExpanded(null)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => e.key === "Escape" && setExpanded(null)}
+          onKeyDown={(e) => e.key === "Escape" && handleSetExpanded(null)}
         >
           <div
             className="rounded-2xl border border-glass-border bg-card/95 backdrop-blur-xl p-6 w-[320px] flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
@@ -276,7 +277,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">{expandedContent[expanded].title}</h3>
-              <button type="button" onClick={() => setExpanded(null)} className="p-1 cursor-pointer" aria-label="Close">
+              <button type="button" onClick={() => handleSetExpanded(null)} className="p-1 cursor-pointer" aria-label="Close">
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
