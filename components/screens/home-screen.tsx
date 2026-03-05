@@ -174,7 +174,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
                 src="http://localhost:8081/stream"
                 alt="Camera feed from IMX500"
                 className="w-full rounded-lg border border-border bg-secondary"
-                style={{ maxHeight: 200 }}
+                style={{ maxHeight: 480 }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none"
                   const p = (e.target as HTMLImageElement).nextElementSibling
