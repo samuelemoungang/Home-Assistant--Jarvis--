@@ -173,6 +173,6 @@ def add_cors_headers(response):
 
 
 if __name__ == "__main__":
-    print("Pi Camera Stream running on http://0.0.0.0:8081")
+    print("Pi Camera Stream running on http://192.168.1.160:8081")
     print(f"Camera available: {PI_CAMERA_AVAILABLE}")
-    app.run(host="0.0.0.0", port=8081, debug=False, threaded=True)
+    app.run(host="192.168.1.160", port=8081, debug=False, threaded=True)
