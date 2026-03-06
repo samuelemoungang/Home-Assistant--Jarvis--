@@ -4,7 +4,7 @@ Gesture Manager Service - Controls gesture_control.py and pi-camera-stream.py
 Runs on localhost:8082 on the Pi.
 
 This service manages which script has control of the camera:
-- gesture_control.py for navigation (1-4 fingers)
+- gesture_control.py for navigation (finger counting)
 - pi-camera-stream.py for camera viewing
 
 Install:
@@ -53,13 +53,26 @@ FINANCE_GESTURE_MAP = {
     4: "reports",
 }
 
-# Main navigation gesture mapping
+# Main dashboard gesture mapping
 MAIN_GESTURE_MAP = {
-    1: "finance",
-    2: "home",
-    3: "offline-ai",
-    4: "exit",
+    1: "stats-cpu-overview",
+    2: "stats-temperature",
+    3: "stats-humidity",
+    4: "camera",
+    5: "main-options",
 }
+
+# Secondary options after 5-finger gesture on main dashboard
+MAIN_SECONDARY_GESTURE_MAP = {
+    1: "finance",
+    2: "offline-ai",
+    3: "exit",
+}
+
+# Secondary menu state (for main dashboard only)
+main_secondary_menu_active = False
+main_secondary_menu_started_at = 0.0
+MAIN_SECONDARY_MENU_TIMEOUT = 8.0
 
 
 def kill_process(proc):
@@ -75,7 +88,7 @@ def kill_process(proc):
 
 def read_gesture_output(proc, mode):
     """Read gesture events from subprocess stdout and queue them."""
-    global current_mode
+    global current_mode, main_secondary_menu_active, main_secondary_menu_started_at
     try:
         for line in iter(proc.stdout.readline, b''):
             if proc.poll() is not None:
@@ -84,15 +97,31 @@ def read_gesture_output(proc, mode):
                 data = json.loads(line.decode().strip())
                 if data.get("type") == "gesture_navigation":
                     fingers = data.get("fingers", 0)
-                    
-                    # Map based on current mode
+
+                    # Main mode: support secondary 3-choice menu after 5 fingers.
                     if mode == "gesture":
-                        target = MAIN_GESTURE_MAP.get(fingers)
+                        now = time.time()
+                        if (
+                            main_secondary_menu_active
+                            and (now - main_secondary_menu_started_at) > MAIN_SECONDARY_MENU_TIMEOUT
+                        ):
+                            main_secondary_menu_active = False
+
+                        target = None
+                        if main_secondary_menu_active:
+                            if fingers in MAIN_SECONDARY_GESTURE_MAP:
+                                target = MAIN_SECONDARY_GESTURE_MAP[fingers]
+                                main_secondary_menu_active = False
+                        else:
+                            target = MAIN_GESTURE_MAP.get(fingers)
+                            if fingers == 5:
+                                main_secondary_menu_active = True
+                                main_secondary_menu_started_at = now
                     elif mode == "finance":
                         target = FINANCE_GESTURE_MAP.get(fingers)
                     else:
                         target = None
-                    
+
                     if target:
                         event = {
                             "type": "navigate",
@@ -162,7 +191,7 @@ def status():
 @app.route("/api/mode/gesture", methods=["POST"])
 def mode_gesture():
     """Switch to main gesture control mode (for home screen navigation)."""
-    global current_mode
+    global current_mode, main_secondary_menu_active, main_secondary_menu_started_at
     
     # Stop camera if running
     kill_process(camera_process)
@@ -171,6 +200,8 @@ def mode_gesture():
     success = start_gesture_control("gesture")
     if success:
         current_mode = "gesture"
+        main_secondary_menu_active = False
+        main_secondary_menu_started_at = 0.0
         return jsonify({"success": True, "mode": "gesture"})
     return jsonify({"success": False, "error": "Failed to start gesture control"}), 500
 
@@ -178,7 +209,7 @@ def mode_gesture():
 @app.route("/api/mode/camera", methods=["POST"])
 def mode_camera():
     """Switch to camera stream mode (stops gesture to free camera)."""
-    global current_mode
+    global current_mode, main_secondary_menu_active, main_secondary_menu_started_at
     
     # Stop gesture control
     kill_process(gesture_process)
@@ -187,6 +218,8 @@ def mode_camera():
     success = start_camera_stream()
     if success:
         current_mode = "camera"
+        main_secondary_menu_active = False
+        main_secondary_menu_started_at = 0.0
         return jsonify({"success": True, "mode": "camera"})
     return jsonify({"success": False, "error": "Failed to start camera stream"}), 500
 
@@ -194,7 +227,7 @@ def mode_camera():
 @app.route("/api/mode/finance", methods=["POST"])
 def mode_finance():
     """Switch to finance gesture mode (1-4 fingers = finance sub-sections)."""
-    global current_mode
+    global current_mode, main_secondary_menu_active, main_secondary_menu_started_at
     
     # Stop camera if running
     kill_process(camera_process)
@@ -203,6 +236,8 @@ def mode_finance():
     success = start_gesture_control("finance")
     if success:
         current_mode = "finance"
+        main_secondary_menu_active = False
+        main_secondary_menu_started_at = 0.0
         return jsonify({"success": True, "mode": "finance"})
     return jsonify({"success": False, "error": "Failed to start gesture control"}), 500
 
