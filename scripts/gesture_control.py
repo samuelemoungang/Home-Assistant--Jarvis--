@@ -11,11 +11,8 @@ Requirements (install on Raspberry Pi):
 Usage:
     python gesture_control.py
 
-Gesture -> Navigation Mapping:
-    1 finger  -> Finance
-    2 fingers -> Home
-    3 fingers -> Offline AI
-    4 fingers -> Raspberry Home / Exit
+Gesture -> Event Mapping (raw count forwarded to manager):
+    1-5 fingers -> gesture event with finger count
 """
 
 import cv2
@@ -61,12 +58,13 @@ FINGER_PIPS = [
 THUMB_TIP = mp_hands.HandLandmark.THUMB_TIP
 THUMB_IP = mp_hands.HandLandmark.THUMB_IP
 
-# Navigation mapping
+# Event mapping (manager will map targets by current mode/context)
 GESTURE_MAP = {
-    1: "finance",
-    2: "home",
-    3: "offline-ai",
-    4: "raspberry-home",
+    1: "gesture-1",
+    2: "gesture-2",
+    3: "gesture-3",
+    4: "gesture-4",
+    5: "gesture-5",
 }
 
 

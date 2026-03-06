@@ -50,16 +50,6 @@ def get_uptime():
         return "unknown"
 
 
-def get_power_consumption():
-    """
-    Estimate power consumption.
-    On Pi 5 there's no direct power measurement via software.
-    Returns None -- can be extended with USB power meter or INA219 sensor.
-    """
-    # Placeholder: return None if no power sensor
-    # If using INA219 sensor on I2C, read from it here
-    return None
-
 
 def is_hand_detected():
     """Check if the camera service has flagged a hand detection."""
@@ -83,7 +73,6 @@ def stats():
         "ram_percent": round(mem.percent, 1),
         "ram_used": round(mem.used / (1024 * 1024), 0),
         "ram_total": round(mem.total / (1024 * 1024), 0),
-        "power_consumption": get_power_consumption(),
         "uptime": get_uptime(),
         "hand_detected": is_hand_detected(),
     })
