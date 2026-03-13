@@ -129,12 +129,6 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
           <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
             <div className="h-full rounded-full bg-accent" style={{ width: `${stats.ram_percent}%` }} />
           </div>
-          {stats.power_consumption != null && (
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Power</span>
-              <span className="font-mono text-foreground">{stats.power_consumption.toFixed(1)} W</span>
-            </div>
-          )}
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Uptime</span>
             <span className="font-mono text-foreground">{stats.uptime}</span>

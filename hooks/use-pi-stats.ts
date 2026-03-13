@@ -9,7 +9,6 @@ export interface PiStats {
   ram_percent: number
   ram_used: number
   ram_total: number
-  power_consumption: number | null
   uptime: string
   hand_detected: boolean
 }
