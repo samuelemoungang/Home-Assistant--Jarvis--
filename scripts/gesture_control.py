@@ -19,6 +19,22 @@ import cv2
 import mediapipe as mp
 import json
 import sys
+import time
+import os
+
+# Hand detection state file (read by pi-stats-service.py)
+HAND_DETECTED_FILE = "/tmp/hand_detected"
+
+def update_hand_detected(detected: bool):
+    """Write timestamp to file when hand is detected, or remove file when not."""
+    try:
+        if detected:
+            with open(HAND_DETECTED_FILE, "w") as f:
+                f.write(str(time.time()))
+        elif os.path.exists(HAND_DETECTED_FILE):
+            os.remove(HAND_DETECTED_FILE)
+    except Exception:
+        pass
 
 # MediaPipe setup
 mp_hands = mp.solutions.hands
