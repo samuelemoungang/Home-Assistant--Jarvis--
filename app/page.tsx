@@ -29,6 +29,7 @@ export default function DashboardPage() {
   }, [])
 
   // Handle gesture navigation events
+  // This function maps gesture targets to screens and handles special cases like exit
   const handleGestureNavigate = useCallback((target: string, fingers: number) => {
     // Map targets to screens
     const screenMap: Record<string, Screen> = {
