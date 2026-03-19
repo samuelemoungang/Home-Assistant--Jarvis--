@@ -21,7 +21,7 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
-      <div className="absolute h-[34rem] w-[34rem] overflow-hidden rounded-full opacity-45 blur-3xl">
+      <div className="absolute h-[38rem] w-[38rem] opacity-45 blur-3xl">
         <video
           className="absolute inset-0 h-full w-full scale-125 object-cover mix-blend-screen"
           src="/videos/jarvis-core.mp4"
@@ -41,7 +41,7 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,rgba(3,10,16,0.15)_58%,rgba(3,10,16,0.9)_100%)]" />
       </div>
 
-      <div className="absolute h-[28rem] w-[28rem] overflow-hidden rounded-full opacity-55 blur-2xl">
+      <div className="absolute h-[32rem] w-[32rem] opacity-55 blur-2xl">
         <video
           className="absolute inset-0 h-full w-full object-cover mix-blend-screen scale-150"
           src="/videos/jarvis-core.mp4"
@@ -68,9 +68,9 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
         )}
       />
 
-      <div className="relative h-72 w-72 overflow-hidden rounded-full">
+      <div className="relative h-[24rem] w-[24rem]">
         <video
-          className="absolute inset-0 h-full w-full object-cover opacity-88 mix-blend-screen scale-110"
+          className="absolute inset-0 h-full w-full object-contain opacity-88 mix-blend-screen scale-110"
           src="/videos/jarvis-core.mp4"
           autoPlay
           loop
@@ -78,7 +78,7 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
           playsInline
         />
         <video
-          className="absolute inset-0 h-full w-full object-cover opacity-68 mix-blend-screen scale-110"
+          className="absolute inset-0 h-full w-full object-contain opacity-68 mix-blend-screen scale-110"
           src="/videos/jarvis-neural.mp4"
           autoPlay
           loop
