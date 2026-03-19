@@ -1,16 +1,15 @@
 "use client"
 
-import { TrendingUp, PieChart, Landmark, FileText, ArrowLeft, X } from "lucide-react"
+import { TrendingUp, PieChart, Landmark, FileText, ArrowLeft, X, LineChart } from "lucide-react"
 import { useFinance } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
 import { useState, useRef, useCallback, useMemo } from "react"
-import { InvestmentsPanel } from "@/components/dashboard/investments-panel"
 
 interface FinanceScreenProps {
   onNavigate: (screen: Screen) => void
 }
 
-type ExpandedCard = "income" | "budgets" | "savings" | "reports" | null
+type ExpandedCard = "income" | "budgets" | "savings" | "reports" | "investments" | null
 
 export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
   const { transactions, budgets, savings, currentMonth } = useFinance()
@@ -23,6 +22,7 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
     { key: "budgets" as const, label: "Budgets", icon: PieChart, target: "budgets" as Screen },
     { key: "savings" as const, label: "Savings", icon: Landmark, target: "savings" as Screen },
     { key: "reports" as const, label: "Reports", icon: FileText, target: "reports" as Screen },
+    { key: "investments" as const, label: "Investments", icon: LineChart, target: "investments" as Screen },
   ]
 
   // Long-press handlers
@@ -98,10 +98,19 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
         `Tap to open full Reports screen`,
       ],
     },
+    investments: {
+      title: "Investments",
+      lines: [
+        `Track stocks, ETFs, and indices`,
+        `Choose your personal start date`,
+        `Estimate return percentage automatically`,
+        `Add invested capital to compute profit/loss`,
+      ],
+    },
   }
 
   return (
-    <div className="relative w-full h-full overflow-y-auto">
+    <div className="relative w-full h-full">
       {/* Back button */}
       <button
         type="button"
@@ -119,35 +128,31 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
         <span className="text-[10px] text-muted-foreground">Supabase</span>
       </div>
 
-      <div className="px-4 pt-20 pb-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <div className="flex flex-col items-center justify-center pt-10">
-            <h2 className="text-lg font-semibold text-foreground mb-2">Finance</h2>
-            <p className="text-[10px] text-muted-foreground mb-5">Tap to open, hold to preview</p>
-            <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-              {items.map((item) => {
-                const Icon = item.icon
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onTouchStart={() => handleTouchStart(item.key)}
-                    onTouchEnd={() => handleTouchEnd(item.target)}
-                    onTouchCancel={handleTouchCancel}
-                    onMouseDown={() => handleTouchStart(item.key)}
-                    onMouseUp={() => handleTouchEnd(item.target)}
-                    onMouseLeave={handleTouchCancel}
-                    className="flex flex-col items-center gap-2 rounded-xl border border-glass-border bg-glass backdrop-blur-xl p-5 active:scale-95 transition-transform cursor-pointer select-none"
-                  >
-                    <Icon className="w-6 h-6 text-primary" />
-                    <span className="text-xs font-medium text-foreground text-center">{item.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <InvestmentsPanel />
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <h2 className="mb-2 text-lg font-semibold text-foreground">Finance</h2>
+        <p className="mb-5 text-[10px] text-muted-foreground">Tap to open, hold to preview</p>
+        <div className="grid w-full max-w-sm grid-cols-2 gap-4">
+          {items.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onTouchStart={() => handleTouchStart(item.key)}
+                onTouchEnd={() => handleTouchEnd(item.target)}
+                onTouchCancel={handleTouchCancel}
+                onMouseDown={() => handleTouchStart(item.key)}
+                onMouseUp={() => handleTouchEnd(item.target)}
+                onMouseLeave={handleTouchCancel}
+                className={`flex flex-col items-center gap-2 rounded-xl border border-glass-border bg-glass p-5 backdrop-blur-xl transition-transform active:scale-95 cursor-pointer select-none ${
+                  item.key === "investments" ? "col-span-2" : ""
+                }`}
+              >
+                <Icon className="h-6 w-6 text-primary" />
+                <span className="text-center text-xs font-medium text-foreground">{item.label}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
