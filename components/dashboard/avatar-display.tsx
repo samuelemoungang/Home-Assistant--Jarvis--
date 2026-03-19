@@ -68,7 +68,7 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
         )}
       />
 
-      <div className="relative h-72 w-72 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_65px_var(--glow)]">
+      <div className="relative h-72 w-72 overflow-hidden rounded-full">
         <video
           className="absolute inset-0 h-full w-full object-cover opacity-88 mix-blend-screen scale-110"
           src="/videos/jarvis-core.mp4"
@@ -86,10 +86,6 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
           playsInline
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(4,11,18,0.08)_48%,rgba(4,11,18,0.58)_76%,rgba(4,11,18,0.82)_100%)]" />
-      </div>
-
-      <div className="absolute bottom-0 rounded-full bg-background/45 px-4 py-1.5 text-[10px] uppercase tracking-[0.34em] text-primary/80 backdrop-blur-xl">
-        Neural Core
       </div>
     </div>
   )
