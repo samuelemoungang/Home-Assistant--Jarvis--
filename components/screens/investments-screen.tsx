@@ -355,7 +355,7 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
                       config={{
                         close: {
                           label: "Close",
-                          color: "hsl(var(--primary))",
+                          color: "var(--primary)",
                         },
                       }}
                     >
@@ -393,8 +393,11 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
                           dataKey="close"
                           stroke="var(--color-close)"
                           strokeWidth={2.5}
+                          strokeOpacity={1}
                           fill="url(#investmentsScreenGradient)"
+                          fillOpacity={1}
                           dot={false}
+                          activeDot={{ r: 4, fill: "var(--color-close)", stroke: "var(--background)" }}
                         />
                       </AreaChart>
                     </ChartContainer>
