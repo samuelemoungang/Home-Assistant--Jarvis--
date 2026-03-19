@@ -1,29 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 interface AvatarDisplayProps {
-  speaking?: boolean
   className?: string
 }
 
-export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProps) {
-  const [pulse, setPulse] = useState(false)
-
-  useEffect(() => {
-    if (speaking) {
-      const interval = setInterval(() => setPulse((p) => !p), 500)
-      return () => clearInterval(interval)
-    }
-    setPulse(false)
-  }, [speaking])
-
+export function AvatarDisplay({ className }: AvatarDisplayProps) {
   return (
-    <div className={cn("relative flex items-center justify-center", className)}>
-      <div className="relative h-[24rem] w-[24rem]">
+    <div className={cn("relative flex items-center justify-center pointer-events-none", className)}>
+      <div className="relative aspect-video w-[92vw] max-w-[1040px] md:w-[72vw]">
         <video
-          className="absolute inset-0 h-full w-full object-contain"
+          className="absolute inset-0 h-full w-full object-cover opacity-88 mix-blend-screen"
           src="/videos/jarvis-core.mp4"
           autoPlay
           loop
@@ -31,7 +19,7 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
           playsInline
         />
         <video
-          className="absolute inset-0 h-full w-full object-contain opacity-72"
+          className="absolute inset-0 h-full w-full object-cover opacity-58 mix-blend-screen"
           src="/videos/jarvis-neural.mp4"
           autoPlay
           loop
