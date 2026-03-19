@@ -4,6 +4,7 @@ import { TrendingUp, PieChart, Landmark, FileText, ArrowLeft, X } from "lucide-r
 import { useFinance } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
 import { useState, useRef, useCallback, useMemo } from "react"
+import { InvestmentsPanel } from "@/components/dashboard/investments-panel"
 
 interface FinanceScreenProps {
   onNavigate: (screen: Screen) => void
@@ -100,7 +101,7 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full overflow-y-auto">
       {/* Back button */}
       <button
         type="button"
@@ -118,30 +119,35 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
         <span className="text-[10px] text-muted-foreground">Supabase</span>
       </div>
 
-      {/* Center grid */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <h2 className="text-lg font-semibold text-foreground mb-2">Finance</h2>
-        <p className="text-[10px] text-muted-foreground mb-5">Tap to open, hold to preview</p>
-        <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-          {items.map((item) => {
-            const Icon = item.icon
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onTouchStart={() => handleTouchStart(item.key)}
-                onTouchEnd={() => handleTouchEnd(item.target)}
-                onTouchCancel={handleTouchCancel}
-                onMouseDown={() => handleTouchStart(item.key)}
-                onMouseUp={() => handleTouchEnd(item.target)}
-                onMouseLeave={handleTouchCancel}
-                className="flex flex-col items-center gap-2 rounded-xl border border-glass-border bg-glass backdrop-blur-xl p-5 active:scale-95 transition-transform cursor-pointer select-none"
-              >
-                <Icon className="w-6 h-6 text-primary" />
-                <span className="text-xs font-medium text-foreground text-center">{item.label}</span>
-              </button>
-            )
-          })}
+      <div className="px-4 pt-20 pb-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+          <div className="flex flex-col items-center justify-center pt-10">
+            <h2 className="text-lg font-semibold text-foreground mb-2">Finance</h2>
+            <p className="text-[10px] text-muted-foreground mb-5">Tap to open, hold to preview</p>
+            <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
+              {items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onTouchStart={() => handleTouchStart(item.key)}
+                    onTouchEnd={() => handleTouchEnd(item.target)}
+                    onTouchCancel={handleTouchCancel}
+                    onMouseDown={() => handleTouchStart(item.key)}
+                    onMouseUp={() => handleTouchEnd(item.target)}
+                    onMouseLeave={handleTouchCancel}
+                    className="flex flex-col items-center gap-2 rounded-xl border border-glass-border bg-glass backdrop-blur-xl p-5 active:scale-95 transition-transform cursor-pointer select-none"
+                  >
+                    <Icon className="w-6 h-6 text-primary" />
+                    <span className="text-xs font-medium text-foreground text-center">{item.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <InvestmentsPanel />
         </div>
       </div>
 
