@@ -32,6 +32,26 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
+      <div className="absolute h-72 w-72 overflow-hidden rounded-full opacity-65 blur-xl">
+        <video
+          className="absolute inset-0 h-full w-full object-cover mix-blend-screen"
+          src="/videos/jarvis-core.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        <video
+          className="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-screen"
+          src="/videos/jarvis-neural.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,rgba(3,10,16,0.15)_58%,rgba(3,10,16,0.9)_100%)]" />
+      </div>
+
       <div
         className={cn(
           "absolute rounded-full bg-primary/20 blur-2xl transition-all duration-700",
@@ -76,15 +96,31 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
       <div className="absolute h-6 w-6 rounded-full bg-primary/30 blur-md" />
       <div className="absolute h-2 w-32 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
 
-      <div className="relative h-32 w-32 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_30px_var(--glow)]">
+      <div className="relative h-36 w-36 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_30px_var(--glow)]">
+        <video
+          className="absolute inset-0 h-full w-full object-cover opacity-75 mix-blend-screen"
+          src="/videos/jarvis-core.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        <video
+          className="absolute inset-0 h-full w-full object-cover opacity-55 mix-blend-screen"
+          src="/videos/jarvis-neural.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
         <Image
           src="/images/avatar.jpg"
           alt="AI Assistant"
           fill
-          className="object-cover opacity-80 saturate-[1.15]"
+          className="object-cover opacity-45 saturate-[1.15]"
           priority
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(4,11,18,0.34)_75%,rgba(4,11,18,0.75)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(4,11,18,0.16)_58%,rgba(4,11,18,0.78)_100%)]" />
       </div>
 
       <div className="absolute bottom-2 rounded-full border border-primary/20 bg-background/60 px-3 py-1 text-[9px] uppercase tracking-[0.3em] text-primary/80 backdrop-blur-xl">
