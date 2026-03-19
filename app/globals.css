@@ -129,21 +129,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@keyframes jarvis-spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes jarvis-spin-reverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-}
