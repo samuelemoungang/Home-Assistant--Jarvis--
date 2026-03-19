@@ -124,7 +124,7 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
 
       try {
         const response = await fetch(
-          `/api/market/history?symbol=${encodeURIComponent(selectedPosition.symbol)}&startDate=${selectedPosition.startDate}`,
+          `/api/market/history?symbol=${encodeURIComponent(selectedPosition.symbol)}&startDate=${selectedPosition.startDate}&providerSymbol=${encodeURIComponent(selectedPosition.providerSymbol || selectedPosition.symbol)}&exchange=${encodeURIComponent(selectedPosition.exchange || "")}`,
           { signal: controller.signal }
         )
         const data: InvestmentHistoryResponse = await response.json()

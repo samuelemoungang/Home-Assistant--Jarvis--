@@ -4,6 +4,8 @@ export interface InvestmentSearchResult {
   exchange: string
   type: string
   currency: string
+  micCode?: string
+  providerSymbol?: string
 }
 
 export interface InvestmentHistoryPoint {

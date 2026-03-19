@@ -14,6 +14,7 @@ function fallbackSearch(query: string): InvestmentSearchResult[] {
       exchange: asset.exchange,
       type: asset.type,
       currency: asset.currency,
+      providerSymbol: asset.symbol,
     }))
 }
 
@@ -54,6 +55,8 @@ export async function GET(request: Request) {
             exchange: String(item.exchange || item.exchange_name || "Unknown"),
             type: String(item.instrument_type || item.type || "Asset"),
             currency: String(item.currency || "USD"),
+            micCode: String(item.mic_code || ""),
+            providerSymbol: item.mic_code ? `${String(item.symbol || "")}:${String(item.mic_code)}` : String(item.symbol || ""),
           }))
       : []
 
