@@ -41,7 +41,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       onCameraToggle(card === "camera")
     }
   }, [onCameraToggle])
-  const { stats, sensors, connected } = usePiStats()
+  const { stats, sensors, connected, source, cameraSnapshot } = usePiStats()
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didLongPress = useRef(false)
 
@@ -73,7 +73,12 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       icon: Cpu,
       label: "Pi Status",
       value: connected && stats ? `${stats.cpu_temp.toFixed(0)}°C` : "--",
-      sub: connected && stats ? `RAM ${stats.ram_percent.toFixed(0)}%` : "Offline",
+      sub:
+        connected && stats
+          ? source === "remote"
+            ? `Remote sync - RAM ${stats.ram_percent.toFixed(0)}%`
+            : `RAM ${stats.ram_percent.toFixed(0)}%`
+          : "Offline",
       color: connected ? (stats && stats.cpu_temp > 70 ? "text-destructive" : "text-primary") : "text-muted-foreground",
     },
     {
@@ -97,7 +102,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       icon: Camera,
       label: "Camera",
       value: "IMX500",
-      sub: connected ? "Stream Ready" : "Offline",
+      sub: source === "local" ? "Live Stream" : source === "remote" ? "Cloud Snapshot" : "Offline",
       color: connected ? "text-chart-2" : "text-muted-foreground",
     },
   ]
@@ -171,19 +176,39 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
         <div className="flex flex-col items-center gap-2">
           {connected ? (
             <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="http://localhost:8081/stream"
-                alt="Camera feed from IMX500"
-                className="w-full rounded-lg border border-border bg-secondary"
-                style={{ maxHeight: 200 }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none"
-                  const p = (e.target as HTMLImageElement).nextElementSibling
-                  if (p) (p as HTMLElement).style.display = "block"
-                }}
-              />
-              <p className="text-xs text-muted-foreground hidden">Camera stream unavailable. Start pi-camera-stream.py.</p>
+              {source === "local" ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="http://localhost:8081/stream"
+                    alt="Camera feed from IMX500"
+                    className="w-full rounded-lg border border-border bg-secondary"
+                    style={{ maxHeight: 200 }}
+                    onError={(e) => {
+                      ;(e.target as HTMLImageElement).style.display = "none"
+                      const p = (e.target as HTMLImageElement).nextElementSibling
+                      if (p) (p as HTMLElement).style.display = "block"
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground hidden">Camera stream unavailable. Start pi-camera-stream.py.</p>
+                </>
+              ) : cameraSnapshot ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cameraSnapshot}
+                    alt="Latest Raspberry Pi camera snapshot"
+                    className="w-full rounded-lg border border-border bg-secondary object-cover"
+                    style={{ maxHeight: 200 }}
+                  />
+                  <p className="text-xs text-muted-foreground text-center">Remote snapshot updated from Supabase every few seconds.</p>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-8 h-8 text-muted-foreground/30" />
+                  <p className="text-xs text-muted-foreground text-center">Remote Pi stats are online, but no fresh camera snapshot is available yet.</p>
+                </>
+              )}
             </>
           ) : (
             <>
