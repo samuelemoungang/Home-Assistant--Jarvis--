@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 interface AvatarDisplayProps {
@@ -32,9 +31,9 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
-      <div className="absolute h-72 w-72 overflow-hidden rounded-full opacity-65 blur-xl">
+      <div className="absolute h-[34rem] w-[34rem] overflow-hidden rounded-full opacity-45 blur-3xl">
         <video
-          className="absolute inset-0 h-full w-full object-cover mix-blend-screen"
+          className="absolute inset-0 h-full w-full scale-125 object-cover mix-blend-screen"
           src="/videos/jarvis-core.mp4"
           autoPlay
           loop
@@ -42,7 +41,7 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
           playsInline
         />
         <video
-          className="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-screen"
+          className="absolute inset-0 h-full w-full scale-125 object-cover opacity-70 mix-blend-screen"
           src="/videos/jarvis-neural.mp4"
           autoPlay
           loop
@@ -52,28 +51,58 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,rgba(3,10,16,0.15)_58%,rgba(3,10,16,0.9)_100%)]" />
       </div>
 
+      <div className="absolute h-[28rem] w-[28rem] overflow-hidden rounded-full opacity-55 blur-2xl">
+        <video
+          className="absolute inset-0 h-full w-full object-cover mix-blend-screen scale-150"
+          src="/videos/jarvis-core.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        <video
+          className="absolute inset-0 h-full w-full object-cover opacity-65 mix-blend-screen scale-150"
+          src="/videos/jarvis-neural.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      </div>
+
       <div
         className={cn(
           "absolute rounded-full bg-primary/20 blur-2xl transition-all duration-700",
-          speaking ? "h-52 w-52 opacity-80" : "h-44 w-44 opacity-45",
+          speaking ? "h-72 w-72 opacity-80" : "h-64 w-64 opacity-45",
           pulse && "scale-110"
         )}
       />
       <div
         className={cn(
           "absolute rounded-full border border-primary/30 transition-all duration-500",
-          speaking ? "h-48 w-48 animate-ping opacity-20" : "h-40 w-40 opacity-20"
+          speaking ? "h-72 w-72 animate-ping opacity-20" : "h-64 w-64 opacity-20"
         )}
       />
-      <div className="absolute h-56 w-56 rounded-full border border-primary/15" />
-      <div className="absolute h-44 w-44 rounded-full border border-primary/20" />
+      <div
+        className="absolute h-[31rem] w-[31rem] rounded-full border border-primary/10"
+        style={{ animation: "jarvis-spin-slow 42s linear infinite" }}
+      />
+      <div
+        className="absolute h-[25rem] w-[25rem] rounded-full border border-primary/20"
+        style={{ animation: "jarvis-spin-reverse 30s linear infinite" }}
+      />
+      <div
+        className="absolute h-[19rem] w-[19rem] rounded-full border border-primary/20"
+        style={{ animation: "jarvis-spin-slow 22s linear infinite" }}
+      />
 
       <svg
         viewBox="0 0 120 120"
         className={cn(
-          "absolute h-52 w-52 text-primary/70 transition-transform duration-700",
+          "absolute h-[26rem] w-[26rem] text-primary/70 transition-transform duration-700",
           speaking ? "scale-105" : "scale-100"
         )}
+        style={{ animation: "jarvis-spin-slow 36s linear infinite" }}
       >
         <defs>
           <linearGradient id="neuroGlow" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -93,12 +122,15 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
         ))}
       </svg>
 
-      <div className="absolute h-6 w-6 rounded-full bg-primary/30 blur-md" />
-      <div className="absolute h-2 w-32 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+      <div className="absolute h-8 w-8 rounded-full bg-primary/30 blur-md" />
+      <div
+        className="absolute h-2 w-52 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm"
+        style={{ animation: "jarvis-spin-reverse 18s linear infinite" }}
+      />
 
-      <div className="relative h-36 w-36 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_30px_var(--glow)]">
+      <div className="relative h-72 w-72 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_65px_var(--glow)]">
         <video
-          className="absolute inset-0 h-full w-full object-cover opacity-75 mix-blend-screen"
+          className="absolute inset-0 h-full w-full object-cover opacity-88 mix-blend-screen scale-110"
           src="/videos/jarvis-core.mp4"
           autoPlay
           loop
@@ -106,24 +138,17 @@ export function AvatarDisplay({ speaking = false, className }: AvatarDisplayProp
           playsInline
         />
         <video
-          className="absolute inset-0 h-full w-full object-cover opacity-55 mix-blend-screen"
+          className="absolute inset-0 h-full w-full object-cover opacity-68 mix-blend-screen scale-110"
           src="/videos/jarvis-neural.mp4"
           autoPlay
           loop
           muted
           playsInline
         />
-        <Image
-          src="/images/avatar.jpg"
-          alt="AI Assistant"
-          fill
-          className="object-cover opacity-45 saturate-[1.15]"
-          priority
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(4,11,18,0.16)_58%,rgba(4,11,18,0.78)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(4,11,18,0.08)_48%,rgba(4,11,18,0.58)_76%,rgba(4,11,18,0.82)_100%)]" />
       </div>
 
-      <div className="absolute bottom-2 rounded-full border border-primary/20 bg-background/60 px-3 py-1 text-[9px] uppercase tracking-[0.3em] text-primary/80 backdrop-blur-xl">
+      <div className="absolute bottom-0 rounded-full border border-primary/20 bg-background/60 px-4 py-1.5 text-[10px] uppercase tracking-[0.34em] text-primary/80 backdrop-blur-xl">
         Neural Core
       </div>
     </div>
