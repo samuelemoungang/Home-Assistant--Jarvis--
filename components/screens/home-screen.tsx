@@ -30,7 +30,6 @@ function exitDashboard() {
 }
 
 export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
-  const [isSpeaking, setIsSpeaking] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [expanded, setExpanded] = useState<ExpandedCard>(null)
   const { refreshAll } = useFinance()
@@ -236,13 +235,12 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
           <WeatherTime />
         </div>
         <div className="pointer-events-auto mb-3">
-          <AvatarDisplay speaking={isSpeaking} />
+          <AvatarDisplay />
         </div>
         <div className="pointer-events-auto w-full max-w-md">
           <div className="mx-4 rounded-xl border border-glass-border bg-glass backdrop-blur-xl overflow-hidden">
             <ChatPanel
               compact
-              onSpeakingChange={setIsSpeaking}
               placeholder="Tell me about your spending..."
               useFinanceAI
               onTransactionAdded={refreshAll}
