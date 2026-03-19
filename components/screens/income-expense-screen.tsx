@@ -149,7 +149,15 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)", fontSize: "11px" }}
+                      contentStyle={{
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        color: "var(--foreground)",
+                        fontSize: "11px",
+                      }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "var(--foreground)" }}
                       formatter={(value: number) => [`${value} CHF`]}
                     />
                   </PieChart>
