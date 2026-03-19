@@ -22,6 +22,7 @@ interface InvestmentsScreenProps {
 }
 
 const STORAGE_KEY = "finance-investments-positions"
+const PORTFOLIO_BASE_CURRENCY = "CHF"
 
 function formatAxisDate(value: string) {
   return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -40,6 +41,9 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
   const [startDate, setStartDate] = useState(getDefaultInvestmentStartDate())
   const [investedAmount, setInvestedAmount] = useState("")
   const [history, setHistory] = useState<InvestmentHistoryPoint[]>([])
+  const [positionMetrics, setPositionMetrics] = useState<Record<string, ReturnType<typeof calculateInvestmentMetrics>>>({})
+  const [fxRates, setFxRates] = useState<Record<string, number>>({})
+  const [fxError, setFxError] = useState("")
   const [dataSource, setDataSource] = useState<"provider" | "fallback">("fallback")
   const [isSearching, setIsSearching] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
@@ -110,6 +114,21 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
     [positions, selectedId]
   )
 
+  async function fetchPositionHistory(position: TrackedInvestment, signal?: AbortSignal) {
+    const response = await fetch(
+      `/api/market/history?symbol=${encodeURIComponent(position.symbol)}&startDate=${position.startDate}&providerSymbol=${encodeURIComponent(position.providerSymbol || position.symbol)}&exchange=${encodeURIComponent(position.exchange || "")}`,
+      { signal }
+    )
+
+    const data: InvestmentHistoryResponse = await response.json()
+
+    if (!response.ok) {
+      throw new Error("Unable to load market history.")
+    }
+
+    return data
+  }
+
   useEffect(() => {
     if (!selectedPosition) {
       setHistory([])
@@ -123,16 +142,7 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
       setHistoryError("")
 
       try {
-        const response = await fetch(
-          `/api/market/history?symbol=${encodeURIComponent(selectedPosition.symbol)}&startDate=${selectedPosition.startDate}&providerSymbol=${encodeURIComponent(selectedPosition.providerSymbol || selectedPosition.symbol)}&exchange=${encodeURIComponent(selectedPosition.exchange || "")}`,
-          { signal: controller.signal }
-        )
-        const data: InvestmentHistoryResponse = await response.json()
-
-        if (!response.ok) {
-          throw new Error("Unable to load market history.")
-        }
-
+        const data = await fetchPositionHistory(selectedPosition, controller.signal)
         setHistory(Array.isArray(data.points) ? data.points : [])
         setDataSource(data.source)
       } catch (error) {
@@ -151,10 +161,110 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
     return () => controller.abort()
   }, [selectedPosition])
 
+  useEffect(() => {
+    if (positions.length === 0) {
+      setPositionMetrics({})
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function loadAllMetrics() {
+      const entries = await Promise.all(
+        positions.map(async (position) => {
+          try {
+            const data = await fetchPositionHistory(position, controller.signal)
+            return [position.id, calculateInvestmentMetrics(data.points, position.investedAmount)] as const
+          } catch (error) {
+            if ((error as Error).name !== "AbortError") {
+              console.error(`Failed to aggregate metrics for ${position.symbol}:`, error)
+            }
+            return [position.id, null] as const
+          }
+        })
+      )
+
+      if (!controller.signal.aborted) {
+        setPositionMetrics(Object.fromEntries(entries))
+      }
+    }
+
+    loadAllMetrics()
+
+    return () => controller.abort()
+  }, [positions])
+
+  useEffect(() => {
+    const currencies = Array.from(new Set(positions.map((position) => position.currency).filter(Boolean)))
+
+    if (currencies.length === 0) {
+      setFxRates({})
+      setFxError("")
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function loadFxRates() {
+      try {
+        const entries = await Promise.all(
+          currencies.map(async (currency) => {
+            if (currency === PORTFOLIO_BASE_CURRENCY) {
+              return [currency, 1] as const
+            }
+
+            const response = await fetch(
+              `/api/market/fx?from=${encodeURIComponent(currency)}&to=${encodeURIComponent(PORTFOLIO_BASE_CURRENCY)}`,
+              { signal: controller.signal }
+            )
+            const data = await response.json()
+            if (!response.ok || !Number.isFinite(data?.rate)) {
+              throw new Error(`FX conversion unavailable for ${currency}`)
+            }
+
+            return [currency, Number(data.rate)] as const
+          })
+        )
+
+        if (!controller.signal.aborted) {
+          setFxRates(Object.fromEntries(entries))
+          setFxError("")
+        }
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Failed to load FX rates:", error)
+          setFxError(`Some portfolio values could not be converted to ${PORTFOLIO_BASE_CURRENCY}.`)
+        }
+      }
+    }
+
+    loadFxRates()
+
+    return () => controller.abort()
+  }, [positions])
+
   const metrics = useMemo(
     () => calculateInvestmentMetrics(history, selectedPosition?.investedAmount || 0),
     [history, selectedPosition]
   )
+
+  const portfolioTotals = useMemo(() => {
+    return positions.reduce(
+      (totals, position) => {
+        const metricsForPosition = positionMetrics[position.id]
+        if (!metricsForPosition) return totals
+
+        const fxRate = fxRates[position.currency]
+        if (!fxRate) return totals
+
+        totals.invested += position.investedAmount * fxRate
+        totals.currentValue += metricsForPosition.currentValue * fxRate
+        totals.profitLoss += metricsForPosition.profitLoss * fxRate
+        return totals
+      },
+      { invested: 0, currentValue: 0, profitLoss: 0 }
+    )
+  }, [fxRates, positionMetrics, positions])
 
   function handleAddPosition() {
     if (!selectedResult) {
@@ -497,11 +607,33 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
                 </div>
               </div>
 
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-glass-border bg-background/40 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Portfolio invested</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
+                    {portfolioTotals.invested.toLocaleString("en-US", { maximumFractionDigits: 2 })} {PORTFOLIO_BASE_CURRENCY}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-glass-border bg-background/40 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Portfolio value</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
+                    {portfolioTotals.currentValue.toLocaleString("en-US", { maximumFractionDigits: 2 })} {PORTFOLIO_BASE_CURRENCY}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-glass-border bg-background/40 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Total profit / loss</p>
+                  <p className={cn("mt-2 text-lg font-semibold", portfolioTotals.profitLoss >= 0 ? "text-accent" : "text-destructive")}>
+                    {portfolioTotals.profitLoss.toLocaleString("en-US", { maximumFractionDigits: 2 })} {PORTFOLIO_BASE_CURRENCY}
+                  </p>
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-dashed border-glass-border bg-background/20 p-4">
                 <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">How it is calculated</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  The app compares the closing price on your start date with the latest available close, then applies that percentage change to your invested amount.
+                  The app compares the closing price on your start date with the latest available close, then applies that percentage change to your invested amount. Portfolio totals are automatically converted to {PORTFOLIO_BASE_CURRENCY} using FX rates from Twelve Data.
                 </p>
+                {fxError && <p className="mt-2 text-xs text-destructive">{fxError}</p>}
               </div>
             </div>
           </div>
