@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 
 import { createClient } from "@/lib/supabase/client"
 
-const PI_STATS_URL = "http://localhost:8080"
+const PI_STATS_URL = process.env.NEXT_PUBLIC_PI_STATS_URL ?? "http://localhost:8080"
 const DEFAULT_DEVICE_ID = process.env.NEXT_PUBLIC_PI_DEVICE_ID || "raspberry-pi"
 const STATS_STALE_MS = 60_000
 const SNAPSHOT_STALE_MS = 30_000
@@ -85,6 +85,13 @@ function toReadableError(error: unknown): PiStatsError {
     }
   }
 
+  if (error instanceof Error && error.message) {
+    return {
+      kind: "unavailable",
+      message: `Pi data unavailable (${error.message}). Check Supabase tables, device_id, and source_updated_at freshness.`,
+    }
+  }
+
   return {
     kind: "unavailable",
     message: "Pi service not connected. Start pi-stats-service.py on the Pi or verify remote sync is updating in Supabase.",
@@ -100,6 +107,10 @@ export function usePiStats(intervalMs = 5000) {
   const [error, setError] = useState<PiStatsError | null>(null)
 
   const fetchLocal = useCallback(async () => {
+    if (!PI_STATS_URL.trim()) {
+      throw new Error("Local Pi URL is disabled")
+    }
+
     const [statsRes, sensorsRes] = await Promise.all([
       fetch(`${PI_STATS_URL}/api/stats`, { signal: AbortSignal.timeout(3000) }),
       fetch(`${PI_STATS_URL}/api/sensors`, { signal: AbortSignal.timeout(3000) }),
