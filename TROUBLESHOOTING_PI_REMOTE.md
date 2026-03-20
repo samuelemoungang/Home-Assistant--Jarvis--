@@ -12,6 +12,10 @@ Questa guida aiuta quando la dashboard "su Internet" non mostra dati `pi_runtime
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+   - `PI_DEVICE_ID` **non è magico**: scegli una stringa stabile (es. `raspberry-pi-salone`) e usa lo stesso valore anche in `NEXT_PUBLIC_PI_DEVICE_ID`.
+>>>>>>> theirs
 =======
    - `PI_DEVICE_ID` **non è magico**: scegli una stringa stabile (es. `raspberry-pi-salone`) e usa lo stesso valore anche in `NEXT_PUBLIC_PI_DEVICE_ID`.
 >>>>>>> theirs
@@ -67,7 +71,10 @@ export PI_DEVICE_ID="raspberry-pi"
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -92,6 +99,9 @@ Nel pannello env del deploy imposta:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -110,6 +120,11 @@ python3 scripts/pi-camera-stream.py
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+Dopo ogni modifica al file `.env`, riavvia i processi Python (`pi-stats-service.py` e `pi-camera-stream.py`) per applicare subito i nuovi valori.
+
+>>>>>>> theirs
 =======
 Dopo ogni modifica al file `.env`, riavvia i processi Python (`pi-stats-service.py` e `pi-camera-stream.py`) per applicare subito i nuovi valori.
 

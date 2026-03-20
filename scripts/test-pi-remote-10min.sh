@@ -12,9 +12,12 @@ set -euo pipefail
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 PI_STATS_URL="${PI_STATS_URL:-http://127.0.0.1:8080}"
 DEVICE_ID="${DEVICE_ID:-${PI_DEVICE_ID:-raspberry-pi}}"
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -38,6 +41,9 @@ DEVICE_ID="${DEVICE_ID:-${PI_DEVICE_ID:-${NEXT_PUBLIC_PI_DEVICE_ID:-$DEFAULT_DEV
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -77,10 +83,13 @@ step "[2/6] Checking required environment"
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 [[ -n "${PI_DEVICE_ID:-}" ]] && ok "PI_DEVICE_ID is set (${PI_DEVICE_ID})" || warn "PI_DEVICE_ID not set (default will be raspberry-pi)"
 [[ -n "${SUPABASE_URL:-}" ]] && ok "SUPABASE_URL is set" || fail "SUPABASE_URL is missing"
 [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] && ok "SUPABASE_SERVICE_ROLE_KEY is set" || fail "SUPABASE_SERVICE_ROLE_KEY is missing"
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -106,6 +115,9 @@ fi
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -123,6 +135,10 @@ runtime_json=$(curl -s "${API_BASE}/pi_runtime_status?select=device_id,source_up
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+set +e
+>>>>>>> theirs
 =======
 set +e
 >>>>>>> theirs
@@ -141,6 +157,7 @@ print(f"device_id={r.get('device_id')} source_updated_at={r.get('source_updated_
 PY
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 case $? in
   0) ok "Runtime row found for device_id=${DEVICE_ID}" ;;
 <<<<<<< ours
@@ -152,11 +169,16 @@ case $? in
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 runtime_status=$?
 set -e
 case $runtime_status in
   0) ok "Runtime row found for device_id=${DEVICE_ID}" ;;
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -170,6 +192,9 @@ case $runtime_status in
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -186,6 +211,10 @@ snap_json=$(curl -s "${API_BASE}/pi_camera_snapshots?select=device_id,source_upd
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+set +e
+>>>>>>> theirs
 =======
 set +e
 >>>>>>> theirs
@@ -207,7 +236,13 @@ if len(b64)==0:
 PY
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 case $? in
+=======
+snapshot_status=$?
+set -e
+case $snapshot_status in
+>>>>>>> theirs
 =======
 snapshot_status=$?
 set -e
@@ -226,6 +261,10 @@ esac
 step "[5/6] Freshness check (stats <=60s, snapshot <=30s)"
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+set +e
+>>>>>>> theirs
 =======
 set +e
 >>>>>>> theirs
@@ -269,7 +308,13 @@ if s_age is None or s_age > 30:
 PY
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 case $? in
+=======
+freshness_status=$?
+set -e
+case $freshness_status in
+>>>>>>> theirs
 =======
 freshness_status=$?
 set -e
