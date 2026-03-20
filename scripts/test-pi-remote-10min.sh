@@ -8,8 +8,31 @@ set -euo pipefail
 #   PI_STATS_URL (default: http://127.0.0.1:8080)
 #   DEVICE_ID (default: ${PI_DEVICE_ID:-raspberry-pi})
 
+<<<<<<< ours
+<<<<<<< ours
 PI_STATS_URL="${PI_STATS_URL:-http://127.0.0.1:8080}"
 DEVICE_ID="${DEVICE_ID:-${PI_DEVICE_ID:-raspberry-pi}}"
+=======
+=======
+>>>>>>> theirs
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${ROOT_DIR}/.env"
+
+if [[ -f "${ENV_FILE}" ]]; then
+  # Load local env file if present (useful when launched manually from repo root).
+  set -a
+  # shellcheck disable=SC1091
+  source "${ENV_FILE}"
+  set +a
+fi
+
+PI_STATS_URL="${PI_STATS_URL:-http://127.0.0.1:8080}"
+DEFAULT_DEVICE_ID="$(hostname 2>/dev/null || echo raspberry-pi)"
+DEVICE_ID="${DEVICE_ID:-${PI_DEVICE_ID:-${NEXT_PUBLIC_PI_DEVICE_ID:-$DEFAULT_DEVICE_ID}}}"
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -38,9 +61,34 @@ for endpoint in health stats sensors; do
 done
 
 step "[2/6] Checking required environment"
+<<<<<<< ours
+<<<<<<< ours
 [[ -n "${PI_DEVICE_ID:-}" ]] && ok "PI_DEVICE_ID is set (${PI_DEVICE_ID})" || warn "PI_DEVICE_ID not set (default will be raspberry-pi)"
 [[ -n "${SUPABASE_URL:-}" ]] && ok "SUPABASE_URL is set" || fail "SUPABASE_URL is missing"
 [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] && ok "SUPABASE_SERVICE_ROLE_KEY is set" || fail "SUPABASE_SERVICE_ROLE_KEY is missing"
+=======
+=======
+>>>>>>> theirs
+if [[ -n "${PI_DEVICE_ID:-}" ]]; then
+  ok "PI_DEVICE_ID is set (${PI_DEVICE_ID})"
+elif [[ -n "${NEXT_PUBLIC_PI_DEVICE_ID:-}" ]]; then
+  warn "PI_DEVICE_ID not set, using NEXT_PUBLIC_PI_DEVICE_ID fallback (${NEXT_PUBLIC_PI_DEVICE_ID})"
+else
+  warn "PI_DEVICE_ID not set, using hostname fallback (${DEVICE_ID})"
+fi
+if [[ -n "${SUPABASE_URL:-}" ]]; then
+  ok "SUPABASE_URL is set"
+else
+  if [[ -f "${ENV_FILE}" ]] && grep -q '^SUPABASE_URL=' "${ENV_FILE}"; then
+    fail "SUPABASE_URL exists in ${ENV_FILE} but is not readable in shell (possible CRLF or invalid .env syntax). Run: sed -i 's/\\r$//' .env"
+  fi
+  fail "SUPABASE_URL is missing. Set it in ${ENV_FILE} or export it in this shell."
+fi
+[[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] && ok "SUPABASE_SERVICE_ROLE_KEY is set" || fail "SUPABASE_SERVICE_ROLE_KEY is missing. Set it in .env (repo root) or export it in this shell."
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
 API_BASE="${SUPABASE_URL%/}/rest/v1"
 
@@ -61,7 +109,23 @@ print(f"device_id={r.get('device_id')} source_updated_at={r.get('source_updated_
 PY
 case $? in
   0) ok "Runtime row found for device_id=${DEVICE_ID}" ;;
+<<<<<<< ours
+<<<<<<< ours
   *) warn "No runtime row found for device_id=${DEVICE_ID}" ;;
+=======
+=======
+>>>>>>> theirs
+  *)
+    warn "No runtime row found for device_id=${DEVICE_ID}"
+    echo "Known device_id values in pi_runtime_status (if any):"
+    curl -s "${API_BASE}/pi_runtime_status?select=device_id&limit=20" \
+      -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+      -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" || true
+    ;;
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 esac
 
 step "[4/6] Reading latest camera snapshot row from Supabase"
