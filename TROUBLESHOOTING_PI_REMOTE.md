@@ -84,6 +84,24 @@ Lo script controlla:
 - freshness dei dati
 - configurazione attesa del deploy web
 
+### Endpoint diagnostico del sito
+
+Sul sito online ora puoi aprire anche:
+
+```text
+/api/pi-remote
+```
+
+L'endpoint restituisce JSON con:
+
+- `deviceId` che il sito sta cercando
+- `reason` del problema, ad esempio `missing_runtime`, `stale_runtime` o `missing_env`
+- `diagnostics.runtime.ageSeconds`
+- `diagnostics.snapshot.ageSeconds`
+- `diagnostics.hints` con suggerimenti pratici
+
+Se questo endpoint risponde con `ok: true`, allora il problema non e Supabase ma il rendering della UI.
+
 ### A. Verifica API locale sul Pi
 
 ```bash
