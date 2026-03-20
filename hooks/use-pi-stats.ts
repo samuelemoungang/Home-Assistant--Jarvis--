@@ -8,6 +8,8 @@ const PI_STATS_URL = process.env.NEXT_PUBLIC_PI_STATS_URL ?? "http://localhost:8
 const DEFAULT_DEVICE_ID = process.env.NEXT_PUBLIC_PI_DEVICE_ID || "raspberry-pi"
 const STATS_STALE_MS = 60_000
 const SNAPSHOT_STALE_MS = 30_000
+const STATS_STALE_SECONDS = STATS_STALE_MS / 1000
+const SNAPSHOT_STALE_SECONDS = SNAPSHOT_STALE_MS / 1000
 
 export interface PiStats {
   cpu_temp: number
@@ -75,26 +77,55 @@ function getMissingRemoteEnvVars() {
   return missing
 }
 
+function formatErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return "Unknown error"
+}
+
 function toReadableError(error: unknown): PiStatsError {
   if (error instanceof Error && error.message === "Supabase client env is missing") {
     const missingVars = getMissingRemoteEnvVars()
     const suffix = missingVars.length > 0 ? ` Missing: ${missingVars.join(", ")}.` : ""
     return {
       kind: "config",
-      message: `Remote Pi monitoring is not configured on this deployment.${suffix}`,
+      message: `Remote Pi monitoring is not configured on this deployment.${suffix} Add the NEXT_PUBLIC Supabase env vars and redeploy.`,
+    }
+  }
+
+  if (error instanceof Error && error.message === "Remote Pi stats are stale or missing") {
+    return {
+      kind: "unavailable",
+      message: `No fresh remote Pi stats found for device_id "${DEFAULT_DEVICE_ID}". Check that the Pi is publishing to Supabase and that source_updated_at is newer than ${STATS_STALE_SECONDS}s.`,
+    }
+  }
+
+  if (error instanceof Error && error.message === "Remote Pi snapshot is stale or missing") {
+    return {
+      kind: "unavailable",
+      message: `Pi stats are online for device_id "${DEFAULT_DEVICE_ID}", but no fresh camera snapshot was found. Verify pi-camera-stream.py and confirm source_updated_at is newer than ${SNAPSHOT_STALE_SECONDS}s.`,
+    }
+  }
+
+  if (error instanceof Error && error.message === "Local Pi stats unavailable") {
+    return {
+      kind: "unavailable",
+      message: `Local Pi API did not respond at ${PI_STATS_URL}/api/stats and the remote fallback also failed. Check the Pi service and the Supabase sync.`,
     }
   }
 
   if (error instanceof Error && error.message) {
     return {
       kind: "unavailable",
-      message: `Pi data unavailable (${error.message}). Check Supabase tables, device_id, and source_updated_at freshness.`,
+      message: `Pi data unavailable for device_id "${DEFAULT_DEVICE_ID}". ${formatErrorMessage(error)}.`,
     }
   }
 
   return {
     kind: "unavailable",
-    message: "Pi service not connected. Start pi-stats-service.py on the Pi or verify remote sync is updating in Supabase.",
+    message: `Pi service not connected for device_id "${DEFAULT_DEVICE_ID}". Start pi-stats-service.py on the Pi or verify remote sync in Supabase.`,
   }
 }
 
@@ -185,7 +216,9 @@ export function usePiStats(intervalMs = 5000) {
       temperature: runtimeRow.temperature,
       humidity: runtimeRow.humidity,
     })
-    setCameraSnapshot(isFresh(snapshotRow?.source_updated_at, SNAPSHOT_STALE_MS) ? buildSnapshotDataUrl(snapshotRow ?? null) : null)
+    const freshSnapshot = isFresh(snapshotRow?.source_updated_at, SNAPSHOT_STALE_MS)
+
+    setCameraSnapshot(freshSnapshot ? buildSnapshotDataUrl(snapshotRow ?? null) : null)
     setConnected(true)
     setSource("remote")
     setError(null)
