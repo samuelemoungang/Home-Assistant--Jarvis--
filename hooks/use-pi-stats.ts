@@ -24,6 +24,12 @@ export interface SensorData {
 }
 
 type DataSource = "local" | "remote" | "offline"
+type PiStatsErrorKind = "config" | "unavailable"
+
+export interface PiStatsError {
+  kind: PiStatsErrorKind
+  message: string
+}
 
 interface RemoteRuntimeRow {
   cpu_temp: number
@@ -55,12 +61,43 @@ function buildSnapshotDataUrl(snapshot: RemoteSnapshotRow | null) {
   return `data:${snapshot.content_type || "image/jpeg"};base64,${snapshot.image_base64}`
 }
 
+function getMissingRemoteEnvVars() {
+  const missing: string[] = []
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    missing.push("NEXT_PUBLIC_SUPABASE_URL")
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  }
+
+  return missing
+}
+
+function toReadableError(error: unknown): PiStatsError {
+  if (error instanceof Error && error.message === "Supabase client env is missing") {
+    const missingVars = getMissingRemoteEnvVars()
+    const suffix = missingVars.length > 0 ? ` Missing: ${missingVars.join(", ")}.` : ""
+    return {
+      kind: "config",
+      message: `Remote Pi monitoring is not configured on this deployment.${suffix}`,
+    }
+  }
+
+  return {
+    kind: "unavailable",
+    message: "Pi service not connected. Start pi-stats-service.py on the Pi or verify remote sync is updating in Supabase.",
+  }
+}
+
 export function usePiStats(intervalMs = 5000) {
   const [stats, setStats] = useState<PiStats | null>(null)
   const [sensors, setSensors] = useState<SensorData>({ temperature: null, humidity: null })
   const [connected, setConnected] = useState(false)
   const [cameraSnapshot, setCameraSnapshot] = useState<string | null>(null)
   const [source, setSource] = useState<DataSource>("offline")
+  const [error, setError] = useState<PiStatsError | null>(null)
 
   const fetchLocal = useCallback(async () => {
     const [statsRes, sensorsRes] = await Promise.all([
@@ -84,6 +121,7 @@ export function usePiStats(intervalMs = 5000) {
     setConnected(true)
     setSource("local")
     setCameraSnapshot(null)
+    setError(null)
   }, [])
 
   const fetchRemote = useCallback(async () => {
@@ -139,6 +177,7 @@ export function usePiStats(intervalMs = 5000) {
     setCameraSnapshot(isFresh(snapshotRow?.source_updated_at, SNAPSHOT_STALE_MS) ? buildSnapshotDataUrl(snapshotRow ?? null) : null)
     setConnected(true)
     setSource("remote")
+    setError(null)
   }, [])
 
   const fetchStats = useCallback(async () => {
@@ -151,10 +190,11 @@ export function usePiStats(intervalMs = 5000) {
 
     try {
       await fetchRemote()
-    } catch {
+    } catch (error) {
       setConnected(false)
       setSource("offline")
       setCameraSnapshot(null)
+      setError(toReadableError(error))
     }
   }, [fetchLocal, fetchRemote])
 
@@ -164,5 +204,5 @@ export function usePiStats(intervalMs = 5000) {
     return () => clearInterval(interval)
   }, [fetchStats, intervalMs])
 
-  return { stats, sensors, connected, source, cameraSnapshot }
+  return { stats, sensors, connected, source, cameraSnapshot, error }
 }

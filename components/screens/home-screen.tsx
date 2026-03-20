@@ -41,7 +41,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       onCameraToggle(card === "camera")
     }
   }, [onCameraToggle])
-  const { stats, sensors, connected, source, cameraSnapshot } = usePiStats()
+  const { stats, sensors, connected, source, cameraSnapshot, error } = usePiStats()
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didLongPress = useRef(false)
 
@@ -78,7 +78,9 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
           ? source === "remote"
             ? `Remote sync - RAM ${stats.ram_percent.toFixed(0)}%`
             : `RAM ${stats.ram_percent.toFixed(0)}%`
-          : "Offline",
+          : error?.kind === "config"
+            ? "Config Error"
+            : "Offline",
       color: connected ? (stats && stats.cpu_temp > 70 ? "text-destructive" : "text-primary") : "text-muted-foreground",
     },
     {
@@ -102,7 +104,14 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       icon: Camera,
       label: "Camera",
       value: "IMX500",
-      sub: source === "local" ? "Live Stream" : source === "remote" ? "Cloud Snapshot" : "Offline",
+      sub:
+        source === "local"
+          ? "Live Stream"
+          : source === "remote"
+            ? "Cloud Snapshot"
+            : error?.kind === "config"
+              ? "Config Error"
+              : "Offline",
       color: connected ? "text-chart-2" : "text-muted-foreground",
     },
   ]
@@ -138,6 +147,8 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
             <span className="font-mono text-foreground">{stats.uptime}</span>
           </div>
         </div>
+      ) : error ? (
+        <p className="text-xs text-muted-foreground">{error.message}</p>
       ) : (
         <p className="text-xs text-muted-foreground">Pi service not connected. Start pi-stats-service.py on the Pi.</p>
       ),
@@ -213,7 +224,9 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
           ) : (
             <>
               <Camera className="w-8 h-8 text-muted-foreground/30" />
-              <p className="text-xs text-muted-foreground text-center">Start pi-camera-stream.py on the Pi to view the MJPEG feed with object detection.</p>
+              <p className="text-xs text-muted-foreground text-center">
+                {error?.message ?? "Start pi-camera-stream.py on the Pi to view the MJPEG feed with object detection."}
+              </p>
             </>
           )}
         </div>
