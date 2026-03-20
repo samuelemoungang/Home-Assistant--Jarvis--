@@ -10,9 +10,15 @@ set -euo pipefail
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 PI_STATS_URL="${PI_STATS_URL:-http://127.0.0.1:8080}"
 DEVICE_ID="${DEVICE_ID:-${PI_DEVICE_ID:-raspberry-pi}}"
 =======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,6 +36,12 @@ PI_STATS_URL="${PI_STATS_URL:-http://127.0.0.1:8080}"
 DEFAULT_DEVICE_ID="$(hostname 2>/dev/null || echo raspberry-pi)"
 DEVICE_ID="${DEVICE_ID:-${PI_DEVICE_ID:-${NEXT_PUBLIC_PI_DEVICE_ID:-$DEFAULT_DEVICE_ID}}}"
 <<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -63,10 +75,16 @@ done
 step "[2/6] Checking required environment"
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 [[ -n "${PI_DEVICE_ID:-}" ]] && ok "PI_DEVICE_ID is set (${PI_DEVICE_ID})" || warn "PI_DEVICE_ID not set (default will be raspberry-pi)"
 [[ -n "${SUPABASE_URL:-}" ]] && ok "SUPABASE_URL is set" || fail "SUPABASE_URL is missing"
 [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] && ok "SUPABASE_SERVICE_ROLE_KEY is set" || fail "SUPABASE_SERVICE_ROLE_KEY is missing"
 =======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 if [[ -n "${PI_DEVICE_ID:-}" ]]; then
@@ -86,6 +104,12 @@ else
 fi
 [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] && ok "SUPABASE_SERVICE_ROLE_KEY is set" || fail "SUPABASE_SERVICE_ROLE_KEY is missing. Set it in .env (repo root) or export it in this shell."
 <<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -97,6 +121,14 @@ runtime_json=$(curl -s "${API_BASE}/pi_runtime_status?select=device_id,source_up
   -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
   -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")
 
+<<<<<<< ours
+<<<<<<< ours
+=======
+set +e
+>>>>>>> theirs
+=======
+set +e
+>>>>>>> theirs
 echo "$runtime_json" | python3 - <<'PY'
 import json,sys
 raw=sys.stdin.read().strip() or '[]'
@@ -107,12 +139,25 @@ if not rows:
 r=rows[0]
 print(f"device_id={r.get('device_id')} source_updated_at={r.get('source_updated_at')} updated_at={r.get('updated_at')}")
 PY
+<<<<<<< ours
+<<<<<<< ours
 case $? in
   0) ok "Runtime row found for device_id=${DEVICE_ID}" ;;
 <<<<<<< ours
 <<<<<<< ours
   *) warn "No runtime row found for device_id=${DEVICE_ID}" ;;
 =======
+=======
+>>>>>>> theirs
+=======
+=======
+>>>>>>> theirs
+runtime_status=$?
+set -e
+case $runtime_status in
+  0) ok "Runtime row found for device_id=${DEVICE_ID}" ;;
+<<<<<<< ours
+>>>>>>> theirs
 =======
 >>>>>>> theirs
   *)
@@ -123,6 +168,12 @@ case $? in
       -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" || true
     ;;
 <<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -133,6 +184,14 @@ snap_json=$(curl -s "${API_BASE}/pi_camera_snapshots?select=device_id,source_upd
   -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
   -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")
 
+<<<<<<< ours
+<<<<<<< ours
+=======
+set +e
+>>>>>>> theirs
+=======
+set +e
+>>>>>>> theirs
 echo "$snap_json" | python3 - <<'PY'
 import json,sys
 raw=sys.stdin.read().strip() or '[]'
@@ -146,13 +205,33 @@ print(f"device_id={r.get('device_id')} source_updated_at={r.get('source_updated_
 if len(b64)==0:
     raise SystemExit(3)
 PY
+<<<<<<< ours
+<<<<<<< ours
 case $? in
+=======
+snapshot_status=$?
+set -e
+case $snapshot_status in
+>>>>>>> theirs
+=======
+snapshot_status=$?
+set -e
+case $snapshot_status in
+>>>>>>> theirs
   0) ok "Snapshot row found with non-empty image_base64" ;;
   3) warn "Snapshot row exists but image_base64 is empty" ;;
   *) warn "No snapshot row found for device_id=${DEVICE_ID}" ;;
 esac
 
 step "[5/6] Freshness check (stats <=60s, snapshot <=30s)"
+<<<<<<< ours
+<<<<<<< ours
+=======
+set +e
+>>>>>>> theirs
+=======
+set +e
+>>>>>>> theirs
 python3 - <<'PY'
 import os, json, datetime
 from urllib.request import Request, urlopen
@@ -188,7 +267,19 @@ if r_age is None or r_age > 60:
 if s_age is None or s_age > 30:
     raise SystemExit(3)
 PY
+<<<<<<< ours
+<<<<<<< ours
 case $? in
+=======
+freshness_status=$?
+set -e
+case $freshness_status in
+>>>>>>> theirs
+=======
+freshness_status=$?
+set -e
+case $freshness_status in
+>>>>>>> theirs
   0) ok "Freshness OK" ;;
   2) warn "Runtime stale/missing (>60s): dashboard will show offline" ;;
   3) warn "Snapshot stale/missing (>30s): image may be hidden" ;;
