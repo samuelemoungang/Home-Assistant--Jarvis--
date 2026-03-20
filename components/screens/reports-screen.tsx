@@ -165,7 +165,7 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
           <DialogHeader className="px-6 pt-6 pb-3">
             <DialogTitle>PDF Preview</DialogTitle>
             <DialogDescription>
-              Controlla il report di {getMonthLabel(month)} prima di scaricarlo come PDF.
+              Review the {getMonthLabel(month)} report before downloading it as a PDF.
             </DialogDescription>
           </DialogHeader>
 
@@ -183,7 +183,7 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
               onClick={() => setPreviewOpen(false)}
               className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
             >
-              Chiudi
+              Close
             </button>
             <button
               type="button"
@@ -191,7 +191,7 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
             >
               <Download className="w-4 h-4" />
-              Scarica PDF
+              Download PDF
             </button>
           </DialogFooter>
         </DialogContent>
