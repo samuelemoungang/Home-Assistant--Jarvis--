@@ -1,7 +1,15 @@
 "use client"
 
-import { ArrowLeft, ChevronLeft, ChevronRight, FileText, FileSpreadsheet, Download } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText, FileSpreadsheet, Download, Eye } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import type { Screen } from "@/lib/navigation"
 import { useState, useEffect } from "react"
 import { getReportSummary, getReportTransactions, type ReportSummary, type Transaction } from "@/lib/api"
@@ -40,9 +48,24 @@ function generateCSV(transactions: Transaction[], month: string): void {
   downloadBlob([header, ...rows].join("\n"), `report-${month}.csv`, "text/csv")
 }
 
-function generatePDFContent(transactions: Transaction[], summary: ReportSummary, month: string): void {
-  // Generate a printable HTML report and open in new tab for PDF saving
-  const html = `<!DOCTYPE html>
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+}
+
+function buildPDFContent(
+  transactions: Transaction[],
+  summary: ReportSummary,
+  month: string,
+  options?: { autoPrint?: boolean },
+): string {
+  const autoPrint = options?.autoPrint ?? false
+
+  return `<!DOCTYPE html>
 <html><head><title>Finance Report - ${getMonthLabel(month)}</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #1a1a2e; }
@@ -69,11 +92,19 @@ function generatePDFContent(transactions: Transaction[], summary: ReportSummary,
 </div>
 <p>${summary.transactionCount} transactions</p>
 <table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th><th>Description</th></tr></thead><tbody>
-${transactions.map((t) => `<tr><td>${t.date}</td><td>${t.type}</td><td>${t.category}</td><td>${t.type === "income" ? "+" : "-"}${t.amount} CHF</td><td>${t.description || "-"}</td></tr>`).join("")}
+${transactions
+  .map(
+    (t) =>
+      `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.type)}</td><td>${escapeHtml(t.category)}</td><td>${t.type === "income" ? "+" : "-"}${t.amount} CHF</td><td>${escapeHtml(t.description || "-")}</td></tr>`,
+  )
+  .join("")}
 </tbody></table>
-<script>window.print();</script>
+${autoPrint ? "<script>window.print();</script>" : ""}
 </body></html>`
+}
 
+function downloadPDFReport(transactions: Transaction[], summary: ReportSummary, month: string): void {
+  const html = buildPDFContent(transactions, summary, month, { autoPrint: true })
   const win = window.open("", "_blank")
   if (win) {
     win.document.write(html)
@@ -97,6 +128,9 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
   const [summary, setSummary] = useState<ReportSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewHtml, setPreviewHtml] = useState("")
+  const [previewTransactions, setPreviewTransactions] = useState<Transaction[]>([])
 
   useEffect(() => {
     setLoading(true)
@@ -112,7 +146,11 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
     try {
       const transactions = await getReportTransactions(month)
       if (format === "csv") generateCSV(transactions, month)
-      else if (format === "pdf") generatePDFContent(transactions, summary, month)
+      else if (format === "pdf") {
+        setPreviewTransactions(transactions)
+        setPreviewHtml(buildPDFContent(transactions, summary, month))
+        setPreviewOpen(true)
+      }
       else generateExcel(transactions, month)
     } catch (e) {
       console.error("Export failed:", e)
@@ -122,6 +160,43 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
 
   return (
     <div className="relative w-full h-full p-4">
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3">
+            <DialogTitle>PDF Preview</DialogTitle>
+            <DialogDescription>
+              Review the {getMonthLabel(month)} report before downloading it as a PDF.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 min-h-0 px-6">
+            <iframe
+              title={`PDF preview for ${getMonthLabel(month)}`}
+              srcDoc={previewHtml}
+              className="w-full h-[62vh] rounded-xl border border-border bg-white"
+            />
+          </div>
+
+          <DialogFooter className="px-6 py-4">
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(false)}
+              className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={() => summary && downloadPDFReport(previewTransactions, summary, month)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
+            >
+              <Download className="w-4 h-4" />
+              Download PDF
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
         <ArrowLeft className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Back</span>
@@ -200,7 +275,7 @@ export function ReportsScreen({ onNavigate }: ReportsScreenProps) {
                   disabled={exporting}
                   className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary py-3 text-sm font-medium text-secondary-foreground active:scale-[0.98] transition-transform cursor-pointer disabled:opacity-50"
                 >
-                  <Download className="w-4 h-4" />
+                  <Eye className="w-4 h-4" />
                   PDF
                 </button>
                 <button
