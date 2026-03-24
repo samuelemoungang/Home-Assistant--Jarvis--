@@ -12,3 +12,4 @@ node_modules/
 TROUBLESHOOTING_PI_REMOTE.md
 scripts/test-pi-remote-10min.sh
 .venv
+.venv
