@@ -14,7 +14,17 @@ interface IncomeExpenseScreenProps {
   onNavigate: (screen: Screen) => void
 }
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"]
+// Colorblind-friendly palette (Wong palette)
+const CHART_COLORS = [
+  "#0072B2", // Blue
+  "#E69F00", // Orange
+  "#009E73", // Green
+  "#CC79A7", // Pink
+  "#F0E442", // Yellow
+  "#56B4E9", // Light blue
+  "#D55E00", // Vermillion
+  "#999999", // Gray
+]
 
 export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
   const { transactions, currentMonth, addTransaction, deleteTransaction } = useFinance()
@@ -154,11 +164,12 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
                         border: "1px solid var(--border)",
                         borderRadius: "8px",
                         color: "var(--foreground)",
-                        fontSize: "11px",
+                        fontSize: "12px",
+                        padding: "8px 12px",
                       }}
                       itemStyle={{ color: "var(--foreground)" }}
-                      labelStyle={{ color: "var(--foreground)" }}
-                      formatter={(value: number) => [`${value} CHF`]}
+                      labelStyle={{ color: "var(--foreground)", fontWeight: 600, marginBottom: "4px" }}
+                      formatter={(value: number, name: string) => [`${value.toLocaleString("en-CH")} CHF`, name]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
