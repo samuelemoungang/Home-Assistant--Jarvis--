@@ -79,7 +79,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
             ? `Remote sync - RAM ${stats.ram_percent.toFixed(0)}%`
             : `RAM ${stats.ram_percent.toFixed(0)}%`
           : error?.kind === "config"
-            ? "Config Error"
+            ? "Remote Config"
             : "Offline",
       color: connected ? (stats && stats.cpu_temp > 70 ? "text-destructive" : "text-primary") : "text-muted-foreground",
     },
@@ -110,7 +110,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
           : source === "remote"
             ? "Cloud Snapshot"
             : error?.kind === "config"
-              ? "Config Error"
+              ? "Remote Config"
               : "Offline",
       color: connected ? "text-chart-2" : "text-muted-foreground",
     },
@@ -150,7 +150,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       ) : error ? (
         <p className="text-xs text-muted-foreground">{error.message}</p>
       ) : (
-        <p className="text-xs text-muted-foreground">Pi service not connected. Start pi-stats-service.py on the Pi.</p>
+        <p className="text-xs text-muted-foreground">Pi service not connected. Start pi-stats-service.py on the Pi or verify the remote Supabase sync.</p>
       ),
     },
     temperature: {
@@ -201,7 +201,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
                       if (p) (p as HTMLElement).style.display = "block"
                     }}
                   />
-                  <p className="text-xs text-muted-foreground hidden">Camera stream unavailable. Start pi-camera-stream.py.</p>
+                  <p className="text-xs text-muted-foreground hidden">Camera stream unavailable. Start pi-camera-stream.py on the Pi.</p>
                 </>
               ) : cameraSnapshot ? (
                 <>
@@ -217,7 +217,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
               ) : (
                 <>
                   <Camera className="w-8 h-8 text-muted-foreground/30" />
-                  <p className="text-xs text-muted-foreground text-center">Remote Pi stats are online, but no fresh camera snapshot is available yet.</p>
+                  <p className="text-xs text-muted-foreground text-center">Remote Pi stats are online, but the latest camera snapshot is missing or too old.</p>
                 </>
               )}
             </>
@@ -225,7 +225,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
             <>
               <Camera className="w-8 h-8 text-muted-foreground/30" />
               <p className="text-xs text-muted-foreground text-center">
-                {error?.message ?? "Start pi-camera-stream.py on the Pi to view the MJPEG feed with object detection."}
+                {error?.message ?? "Start pi-camera-stream.py on the Pi to view the MJPEG feed or publish snapshots to Supabase."}
               </p>
             </>
           )}
