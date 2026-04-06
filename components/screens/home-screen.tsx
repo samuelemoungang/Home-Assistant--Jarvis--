@@ -30,7 +30,6 @@ function exitDashboard() {
 }
 
 export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
-  const [isSpeaking, setIsSpeaking] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [expanded, setExpanded] = useState<ExpandedCard>(null)
   const { refreshAll } = useFinance()
