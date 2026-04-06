@@ -5,7 +5,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { ArrowLeft, LineChart, Search, Wallet } from "lucide-react"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from "@/components/ui/input"
-import { GlassCard } from "@/components/dashboard/glass-card"
+
 import {
   calculateInvestmentMetrics,
   getDefaultInvestmentStartDate,
@@ -314,19 +314,13 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
 
   return (
     <div className="relative w-full h-full overflow-y-auto p-4">
-      {/* Desktop back button */}
-      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")} className="hidden md:flex">
-        <ArrowLeft className="w-5 h-5 text-primary" />
-        <span className="text-xs font-medium text-foreground">Back</span>
-      </GlassCard>
-
       <div className="mx-auto flex max-w-6xl flex-col gap-5 pt-4 pb-20">
-        {/* Mobile back button */}
-        <div className="md:hidden">
+        {/* Back button - visible on all screen sizes */}
+        <div>
           <button
             type="button"
             onClick={() => onNavigate("finance")}
-            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl"
+            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl hover:bg-glass/80 transition-colors cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4 text-primary" />
             Back
