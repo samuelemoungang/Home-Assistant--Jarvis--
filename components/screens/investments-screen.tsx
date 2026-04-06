@@ -314,12 +314,24 @@ export function InvestmentsScreen({ onNavigate }: InvestmentsScreenProps) {
 
   return (
     <div className="relative w-full h-full overflow-y-auto p-4">
-      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
+      {/* Desktop back button */}
+      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")} className="hidden md:flex">
         <ArrowLeft className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Back</span>
       </GlassCard>
 
       <div className="mx-auto flex max-w-6xl flex-col gap-5 pt-4 pb-20">
+        {/* Mobile back button */}
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={() => onNavigate("finance")}
+            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl"
+          >
+            <ArrowLeft className="h-4 w-4 text-primary" />
+            Back
+          </button>
+        </div>
         <div className="space-y-1 text-center">
           <h2 className="text-lg font-semibold text-foreground">Investments</h2>
           <p className="text-xs text-muted-foreground">
