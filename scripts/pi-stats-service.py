@@ -18,6 +18,9 @@ from flask import Flask, jsonify
 import psutil
 import os
 import time
+import threading
+
+from supabase_bridge import upsert_pi_runtime_status
 
 app = Flask(__name__)
 
@@ -65,21 +68,7 @@ def is_hand_detected():
     return False
 
 
-@app.route("/api/stats")
-def stats():
-    mem = psutil.virtual_memory()
-    return jsonify({
-        "cpu_temp": get_cpu_temperature(),
-        "ram_percent": round(mem.percent, 1),
-        "ram_used": round(mem.used / (1024 * 1024), 0),
-        "ram_total": round(mem.total / (1024 * 1024), 0),
-        "uptime": get_uptime(),
-        "hand_detected": is_hand_detected(),
-    })
-
-
-@app.route("/api/sensors")
-def sensors():
+def read_sensors():
     """
     Read temperature and humidity from GPIO sensors.
     Currently returns null -- connect a DHT22 or DS18B20 sensor and uncomment the code below.
@@ -104,10 +93,53 @@ def sensors():
     # except Exception:
     #     pass
 
-    return jsonify({
+    return {
         "temperature": temperature,
         "humidity": humidity,
+    }
+
+
+def build_status_payload():
+    mem = psutil.virtual_memory()
+    sensors = read_sensors()
+    return {
+        "cpu_temp": get_cpu_temperature(),
+        "ram_percent": round(mem.percent, 1),
+        "ram_used": round(mem.used / (1024 * 1024), 0),
+        "ram_total": round(mem.total / (1024 * 1024), 0),
+        "uptime": get_uptime(),
+        "hand_detected": is_hand_detected(),
+        "temperature": sensors["temperature"],
+        "humidity": sensors["humidity"],
+        "source_updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+
+
+def publish_status_loop():
+    while True:
+        try:
+            upsert_pi_runtime_status(build_status_payload())
+        except Exception as e:
+            print(f"Supabase runtime status publish failed: {e}")
+        time.sleep(5)
+
+
+@app.route("/api/stats")
+def stats():
+    payload = build_status_payload()
+    return jsonify({
+        "cpu_temp": payload["cpu_temp"],
+        "ram_percent": payload["ram_percent"],
+        "ram_used": payload["ram_used"],
+        "ram_total": payload["ram_total"],
+        "uptime": payload["uptime"],
+        "hand_detected": payload["hand_detected"],
     })
+
+
+@app.route("/api/sensors")
+def sensors():
+    return jsonify(read_sensors())
 
 
 @app.route("/api/health")
@@ -126,4 +158,5 @@ def add_cors_headers(response):
 
 if __name__ == "__main__":
     print("Pi Stats Service running on http://0.0.0.0:8080")
+    threading.Thread(target=publish_status_loop, daemon=True).start()
     app.run(host="0.0.0.0", port=8080, debug=False)

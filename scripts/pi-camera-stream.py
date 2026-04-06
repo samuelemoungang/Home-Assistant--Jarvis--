@@ -1,36 +1,29 @@
 #!/usr/bin/env python3
 """
-Pi Camera Stream - MJPEG stream from IMX500 with object detection.
+Pi Camera Stream - MJPEG stream from IMX500 with optional Supabase snapshot uploads.
 Runs on localhost:8081 on the Pi.
-
-Install:
-    pip3 install flask picamera2 opencv-python-headless
-
-The IMX500 AI camera supports on-chip object detection.
-This script streams the video feed as MJPEG and writes hand detection
-status to /tmp/hand_detected for the stats service to read.
-
-Run:
-    python3 pi-camera-stream.py
-
-Endpoints:
-    GET /stream -> MJPEG video stream
 """
 
 from flask import Flask, Response
+import threading
 import time
 import os
-import io
+
+from supabase_bridge import upsert_camera_snapshot
 
 app = Flask(__name__)
 
 HAND_DETECTED_FILE = "/tmp/hand_detected"
+LATEST_FRAME = None
+FRAME_LOCK = threading.Lock()
+SNAPSHOT_INTERVAL_SECONDS = 2.0
 
 # Try to import picamera2 (only available on Pi)
 try:
     from picamera2 import Picamera2
     import cv2
     import numpy as np
+
     PI_CAMERA_AVAILABLE = True
 except ImportError:
     PI_CAMERA_AVAILABLE = False
@@ -38,7 +31,6 @@ except ImportError:
 
 
 def signal_hand_detected():
-    """Write current timestamp to the hand detection file."""
     try:
         with open(HAND_DETECTED_FILE, "w") as f:
             f.write(str(time.time()))
@@ -46,34 +38,37 @@ def signal_hand_detected():
         pass
 
 
-def generate_frames_picamera():
-    """Generate MJPEG frames from the IMX500 camera with object detection."""
+def set_latest_frame(frame_bytes: bytes):
+    global LATEST_FRAME
+    with FRAME_LOCK:
+        LATEST_FRAME = frame_bytes
+
+
+def get_latest_frame():
+    with FRAME_LOCK:
+        return LATEST_FRAME
+
+
+def capture_loop_picamera():
     camera = Picamera2()
     config = camera.create_preview_configuration(main={"size": (640, 480)})
     camera.configure(config)
     camera.start()
-
-    # Allow camera to warm up
     time.sleep(2)
+
+    last_snapshot_at = 0.0
 
     try:
         while True:
             frame = camera.capture_array()
-
-            # Convert RGB to BGR for OpenCV
             frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-            # IMX500 on-chip detection results
-            # The Picamera2 library provides metadata with detection results
             metadata = camera.capture_metadata()
             detections = metadata.get("nn.output", [])
 
-            # Check for hand/person detections and draw bounding boxes
             hand_found = False
             if isinstance(detections, (list, np.ndarray)) and len(detections) > 0:
                 for det in detections:
-                    # Detection format depends on the model loaded on IMX500
-                    # Common format: [class_id, confidence, x1, y1, x2, y2]
                     try:
                         if len(det) >= 6:
                             class_id = int(det[0])
@@ -84,14 +79,11 @@ def generate_frames_picamera():
                                 x2 = int(det[4] * 640)
                                 y2 = int(det[5] * 480)
 
-                                # Draw bounding box
                                 color = (0, 255, 0)
                                 cv2.rectangle(frame_bgr, (x1, y1), (x2, y2), color, 2)
                                 label = f"ID:{class_id} {confidence:.0%}"
-                                cv2.putText(frame_bgr, label, (x1, y1 - 8),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+                                cv2.putText(frame_bgr, label, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
 
-                                # COCO class 0 = person, which includes hands
                                 if class_id == 0:
                                     hand_found = True
                     except (IndexError, ValueError):
@@ -100,68 +92,78 @@ def generate_frames_picamera():
             if hand_found:
                 signal_hand_detected()
 
-            # Encode frame as JPEG
-            _, buffer = cv2.imencode(".jpg", frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            ok, buffer = cv2.imencode(".jpg", frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            if not ok:
+                time.sleep(0.05)
+                continue
+
             frame_bytes = buffer.tobytes()
+            set_latest_frame(frame_bytes)
 
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-            )
+            now = time.time()
+            if now - last_snapshot_at >= SNAPSHOT_INTERVAL_SECONDS:
+                try:
+                    upsert_camera_snapshot(frame_bytes)
+                except Exception as e:
+                    print(f"Supabase camera snapshot publish failed: {e}")
+                last_snapshot_at = now
 
-            # ~15 FPS
             time.sleep(0.066)
     finally:
         camera.stop()
 
 
-def generate_frames_placeholder():
-    """Generate placeholder frames when no camera is available."""
+def capture_loop_placeholder():
     try:
         import cv2
         import numpy as np
+
+        last_snapshot_at = 0.0
         while True:
             frame = np.zeros((480, 640, 3), dtype=np.uint8)
             frame[:] = (30, 30, 40)
-            cv2.putText(frame, "No Camera", (200, 230),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (100, 100, 120), 2)
-            cv2.putText(frame, "Connect IMX500", (180, 270),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (80, 80, 100), 1)
-            _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-            frame_bytes = buffer.tobytes()
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-            )
+            cv2.putText(frame, "No Camera", (200, 230), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (100, 100, 120), 2)
+            cv2.putText(frame, "Connect IMX500", (180, 270), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (80, 80, 100), 1)
+            ok, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            if ok:
+              frame_bytes = buffer.tobytes()
+              set_latest_frame(frame_bytes)
+              now = time.time()
+              if now - last_snapshot_at >= 10:
+                  try:
+                      upsert_camera_snapshot(frame_bytes)
+                  except Exception as e:
+                      print(f"Supabase placeholder snapshot publish failed: {e}")
+                  last_snapshot_at = now
             time.sleep(1)
     except ImportError:
-        # No OpenCV either, send a minimal 1x1 JPEG
         while True:
-            # Minimal JPEG: 1x1 black pixel
             jpeg_bytes = bytes([
                 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46,
                 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
                 0xFF, 0xD9
             ])
+            set_latest_frame(jpeg_bytes)
+            time.sleep(2)
+
+
+def generate_frames():
+    while True:
+        frame_bytes = get_latest_frame()
+        if frame_bytes:
             yield (
                 b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n" + jpeg_bytes + b"\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
             )
-            time.sleep(2)
+        time.sleep(0.066)
 
 
 @app.route("/stream")
 def stream():
-    if PI_CAMERA_AVAILABLE:
-        return Response(
-            generate_frames_picamera(),
-            mimetype="multipart/x-mixed-replace; boundary=frame"
-        )
-    else:
-        return Response(
-            generate_frames_placeholder(),
-            mimetype="multipart/x-mixed-replace; boundary=frame"
-        )
+    return Response(
+        generate_frames(),
+        mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
 
 
 @app.after_request
@@ -175,4 +177,8 @@ def add_cors_headers(response):
 if __name__ == "__main__":
     print("Pi Camera Stream running on http://0.0.0.0:8081")
     print(f"Camera available: {PI_CAMERA_AVAILABLE}")
+
+    target = capture_loop_picamera if PI_CAMERA_AVAILABLE else capture_loop_placeholder
+    threading.Thread(target=target, daemon=True).start()
+
     app.run(host="0.0.0.0", port=8081, debug=False, threaded=True)

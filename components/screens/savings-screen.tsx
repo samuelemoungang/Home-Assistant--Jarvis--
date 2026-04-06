@@ -51,18 +51,38 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
   }
 
   return (
-    <div className="relative w-full h-full p-4">
-      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
+    <div className="relative w-full h-full overflow-y-auto p-4">
+      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")} className="hidden md:flex">
         <ArrowLeft className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Back</span>
       </GlassCard>
 
-      <GlassCard position="top-right" onClick={() => setShowForm(true)}>
+      <GlassCard position="top-right" onClick={() => setShowForm(true)} className="hidden md:flex">
         <Plus className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Add</span>
       </GlassCard>
 
-      <div className="flex flex-col items-center gap-4 h-full max-w-lg mx-auto">
+      <div className="mx-auto flex h-full max-w-lg flex-col gap-4 pb-4">
+        <div className="flex items-center justify-between gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={() => onNavigate("finance")}
+            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl"
+          >
+            <ArrowLeft className="h-4 w-4 text-primary" />
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            Add
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center gap-4 md:h-full">
         <h2 className="text-lg font-semibold text-foreground">Savings Goals</h2>
 
         {/* Total summary */}
@@ -76,7 +96,7 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
           </div>
         </div>
 
-        <div className="w-full flex-1 overflow-y-auto space-y-3 pr-2">
+        <div className="w-full space-y-3 md:flex-1 md:overflow-y-auto md:pr-2">
           {savings.length === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-8">No savings goals yet. Tap Add to create one.</p>
           )}
@@ -126,12 +146,13 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
             )
           })}
         </div>
+        </div>
       </div>
 
       {/* Add Goal Form */}
       {showForm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="rounded-xl border border-glass-border bg-card p-5 w-[300px] flex flex-col gap-3">
+          <div className="w-full max-w-[300px] rounded-xl border border-glass-border bg-card p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">New Savings Goal</h3>
               <button type="button" onClick={() => setShowForm(false)} className="p-1 cursor-pointer" aria-label="Close form">
@@ -168,7 +189,7 @@ export function SavingsScreen({ onNavigate }: SavingsScreenProps) {
       {/* Add Funds Form */}
       {showFundForm !== null && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="rounded-xl border border-glass-border bg-card p-5 w-[300px] flex flex-col gap-3">
+          <div className="w-full max-w-[300px] rounded-xl border border-glass-border bg-card p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Add Funds</h3>
               <button type="button" onClick={() => setShowFundForm(null)} className="p-1 cursor-pointer" aria-label="Close form">

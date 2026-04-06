@@ -4,7 +4,6 @@ import { ArrowLeft, Cpu, WifiOff } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { AvatarDisplay } from "@/components/dashboard/avatar-display"
 import { ChatPanel } from "@/components/dashboard/chat-panel"
-import { useState } from "react"
 import type { Screen } from "@/lib/navigation"
 
 interface OfflineAIScreenProps {
@@ -12,8 +11,6 @@ interface OfflineAIScreenProps {
 }
 
 export function OfflineAIScreen({ onNavigate }: OfflineAIScreenProps) {
-  const [isSpeaking, setIsSpeaking] = useState(false)
-
   return (
     <div className="relative w-full h-full">
       {/* Back button */}
@@ -42,14 +39,13 @@ export function OfflineAIScreen({ onNavigate }: OfflineAIScreenProps) {
 
         {/* Avatar */}
         <div className="pointer-events-auto mb-4">
-          <AvatarDisplay speaking={isSpeaking} />
+          <AvatarDisplay />
         </div>
 
         {/* Chat panel */}
         <div className="pointer-events-auto w-full max-w-md">
           <div className="mx-4 rounded-xl border border-glass-border bg-glass backdrop-blur-xl overflow-hidden">
             <ChatPanel
-              onSpeakingChange={setIsSpeaking}
               placeholder="Ask your local AI..."
               aiEndpoint="/api/offline-ai"
             />

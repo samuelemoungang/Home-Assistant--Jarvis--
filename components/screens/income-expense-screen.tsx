@@ -83,24 +83,43 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
   const categories = formType === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
 
   return (
-    <div className="relative w-full h-full p-4">
+    <div className="relative w-full h-full overflow-y-auto p-4">
       {/* Back button */}
-      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")}>
+      <GlassCard position="bottom-right" onClick={() => onNavigate("finance")} className="hidden md:flex">
         <ArrowLeft className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Back</span>
       </GlassCard>
 
       {/* Add button */}
-      <GlassCard position="top-right" onClick={() => setShowForm(true)}>
+      <GlassCard position="top-right" onClick={() => setShowForm(true)} className="hidden md:flex">
         <Plus className="w-5 h-5 text-primary" />
         <span className="text-xs font-medium text-foreground">Add</span>
       </GlassCard>
 
-      <div className="flex flex-col items-center gap-3 h-full">
+      <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-3 pb-4 md:items-center">
+        <div className="flex items-center justify-between gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={() => onNavigate("finance")}
+            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl"
+          >
+            <ArrowLeft className="h-4 w-4 text-primary" />
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-glass-border bg-glass px-3 py-2 text-sm text-foreground backdrop-blur-xl"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            Add
+          </button>
+        </div>
+
         <h2 className="text-lg font-semibold text-foreground">Income & Expenses</h2>
 
         {/* Summary */}
-        <div className="flex gap-6">
+        <div className="grid w-full grid-cols-3 gap-3 md:flex md:w-auto md:gap-6">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Income</p>
             <p className="text-lg font-bold text-accent">{totalIncome.toLocaleString("en-CH")} CHF</p>
@@ -116,9 +135,9 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
         </div>
 
         {/* Charts + List */}
-        <div className="flex gap-4 flex-1 w-full max-w-4xl overflow-hidden">
+        <div className="flex w-full flex-1 flex-col gap-4 overflow-visible md:flex-row md:overflow-hidden">
           {/* Charts column */}
-          <div className="flex flex-col gap-2 w-1/2">
+          <div className="flex w-full flex-col gap-2 md:w-1/2">
             {pieData.length > 0 ? (
               <>
                 <p className="text-xs text-muted-foreground text-center">Expenses by Category</p>
@@ -130,7 +149,15 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)", fontSize: "11px" }}
+                      contentStyle={{
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        color: "var(--foreground)",
+                        fontSize: "11px",
+                      }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "var(--foreground)" }}
                       formatter={(value: number) => [`${value} CHF`]}
                     />
                   </PieChart>
@@ -152,9 +179,9 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
           </div>
 
           {/* Transaction list */}
-          <div className="w-1/2 flex flex-col">
+          <div className="flex w-full min-h-0 flex-col md:w-1/2">
             <p className="text-xs text-muted-foreground text-center mb-2">Recent Transactions</p>
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            <div className="space-y-1.5 md:flex-1 md:overflow-y-auto md:pr-1">
               {transactions.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center mt-8">No transactions yet. Tap Add to start.</p>
               )}

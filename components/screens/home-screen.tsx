@@ -42,7 +42,7 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       onCameraToggle(card === "camera")
     }
   }, [onCameraToggle])
-  const { stats, sensors, connected } = usePiStats()
+  const { stats, sensors, connected, source, cameraSnapshot, error } = usePiStats()
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didLongPress = useRef(false)
 
@@ -74,7 +74,14 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       icon: Cpu,
       label: "Pi Status",
       value: connected && stats ? `${stats.cpu_temp.toFixed(0)}°C` : "--",
-      sub: connected && stats ? `RAM ${stats.ram_percent.toFixed(0)}%` : "Offline",
+      sub:
+        connected && stats
+          ? source === "remote"
+            ? `Remote sync - RAM ${stats.ram_percent.toFixed(0)}%`
+            : `RAM ${stats.ram_percent.toFixed(0)}%`
+          : error?.kind === "config"
+            ? "Remote Config"
+            : "Offline",
       color: connected ? (stats && stats.cpu_temp > 70 ? "text-destructive" : "text-primary") : "text-muted-foreground",
     },
     {
@@ -98,7 +105,14 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       icon: Camera,
       label: "Camera",
       value: "IMX500",
-      sub: connected ? "Stream Ready" : "Offline",
+      sub:
+        source === "local"
+          ? "Live Stream"
+          : source === "remote"
+            ? "Cloud Snapshot"
+            : error?.kind === "config"
+              ? "Remote Config"
+              : "Offline",
       color: connected ? "text-chart-2" : "text-muted-foreground",
     },
   ]
@@ -134,8 +148,10 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
             <span className="font-mono text-foreground">{stats.uptime}</span>
           </div>
         </div>
+      ) : error ? (
+        <p className="text-xs text-muted-foreground">{error.message}</p>
       ) : (
-        <p className="text-xs text-muted-foreground">Pi service not connected. Start pi-stats-service.py on the Pi.</p>
+        <p className="text-xs text-muted-foreground">Pi service not connected. Start pi-stats-service.py on the Pi or verify the remote Supabase sync.</p>
       ),
     },
     temperature: {
@@ -172,24 +188,46 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
         <div className="flex flex-col items-center gap-2">
           {connected ? (
             <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="http://localhost:8081/stream"
-                alt="Camera feed from IMX500"
-                className="w-full rounded-lg border border-border bg-secondary"
-                style={{ maxHeight: 200 }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none"
-                  const p = (e.target as HTMLImageElement).nextElementSibling
-                  if (p) (p as HTMLElement).style.display = "block"
-                }}
-              />
-              <p className="text-xs text-muted-foreground hidden">Camera stream unavailable. Start pi-camera-stream.py.</p>
+              {source === "local" ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="http://localhost:8081/stream"
+                    alt="Camera feed from IMX500"
+                    className="w-full rounded-lg border border-border bg-secondary"
+                    style={{ maxHeight: 200 }}
+                    onError={(e) => {
+                      ;(e.target as HTMLImageElement).style.display = "none"
+                      const p = (e.target as HTMLImageElement).nextElementSibling
+                      if (p) (p as HTMLElement).style.display = "block"
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground hidden">Camera stream unavailable. Start pi-camera-stream.py on the Pi.</p>
+                </>
+              ) : cameraSnapshot ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cameraSnapshot}
+                    alt="Latest Raspberry Pi camera snapshot"
+                    className="w-full rounded-lg border border-border bg-secondary object-cover"
+                    style={{ maxHeight: 200 }}
+                  />
+                  <p className="text-xs text-muted-foreground text-center">Remote snapshot updated from Supabase every few seconds.</p>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-8 h-8 text-muted-foreground/30" />
+                  <p className="text-xs text-muted-foreground text-center">Remote Pi stats are online, but the latest camera snapshot is missing or too old.</p>
+                </>
+              )}
             </>
           ) : (
             <>
               <Camera className="w-8 h-8 text-muted-foreground/30" />
-              <p className="text-xs text-muted-foreground text-center">Start pi-camera-stream.py on the Pi to view the MJPEG feed with object detection.</p>
+              <p className="text-xs text-muted-foreground text-center">
+                {error?.message ?? "Start pi-camera-stream.py on the Pi to view the MJPEG feed or publish snapshots to Supabase."}
+              </p>
             </>
           )}
         </div>
@@ -236,13 +274,12 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
           <WeatherTime />
         </div>
         <div className="pointer-events-auto mb-3">
-          <AvatarDisplay speaking={isSpeaking} />
+          <AvatarDisplay />
         </div>
         <div className="pointer-events-auto w-full max-w-md">
           <div className="mx-4 rounded-xl border border-glass-border bg-glass backdrop-blur-xl overflow-hidden">
             <ChatPanel
               compact
-              onSpeakingChange={setIsSpeaking}
               placeholder="Tell me about your spending..."
               useFinanceAI
               onTransactionAdded={refreshAll}

@@ -7,7 +7,7 @@ const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3";
 
 const CATEGORIES = {
-  expense: ["Food", "Transport", "Housing", "Utilities", "Entertainment", "Health", "Shopping", "Education", "Insurance", "Other"],
+  expense: ["Food", "Transport", "Housing", "Utilities", "Subscriptions", "Entertainment", "Health", "Shopping", "Education", "Insurance", "Other"],
   income: ["Salary", "Freelance", "Investment", "Gift", "Refund", "Other"],
 };
 
@@ -149,7 +149,8 @@ function fallbackParse(message) {
       transport: ["transport", "gas", "fuel", "bus", "train", "uber", "taxi", "car"],
       housing: ["rent", "mortgage", "housing", "apartment"],
       utilities: ["electricity", "water", "internet", "phone", "utility", "utilities"],
-      entertainment: ["movie", "game", "netflix", "spotify", "entertainment", "concert"],
+      subscriptions: ["subscription", "subscriptions", "recurring", "monthly fee", "membership", "netflix", "spotify"],
+      entertainment: ["movie", "game", "entertainment", "concert"],
       health: ["doctor", "medicine", "pharmacy", "health", "gym", "fitness"],
       shopping: ["clothes", "shoes", "amazon", "shopping", "store"],
       salary: ["salary", "paycheck", "wage"],

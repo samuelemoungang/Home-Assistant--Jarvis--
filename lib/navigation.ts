@@ -1,4 +1,4 @@
-export type Screen = "home" | "finance" | "offline-ai" | "income" | "budgets" | "savings" | "reports"
+export type Screen = "home" | "finance" | "offline-ai" | "income" | "budgets" | "savings" | "reports" | "investments"
 
 export const screens = {
   home: {
@@ -15,7 +15,7 @@ export const screens = {
     corners: {
       "top-left": { label: "Income / Expenses", icon: "TrendingUp", target: "income" as Screen },
       "top-right": { label: "Budgets", icon: "PieChart", target: "budgets" as Screen },
-      "bottom-left": { label: "Savings", icon: "Landmark", target: "savings" as Screen },
+      "bottom-left": { label: "Investments", icon: "LineChart", target: "investments" as Screen },
       "bottom-right": { label: "Back", icon: "ArrowLeft", target: "home" as Screen },
     },
   },

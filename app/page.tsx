@@ -7,6 +7,7 @@ import { IncomeExpenseScreen } from "@/components/screens/income-expense-screen"
 import { BudgetsScreen } from "@/components/screens/budgets-screen"
 import { SavingsScreen } from "@/components/screens/savings-screen"
 import { ReportsScreen } from "@/components/screens/reports-screen"
+import { InvestmentsScreen } from "@/components/screens/investments-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
 import { AutoRefresh } from "@/components/dashboard/auto-refresh"
 import { FinanceProvider } from "@/lib/finance-context"
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   }, [])
 
   // Handle gesture navigation events
+  // This function maps gesture targets to screens and handles special cases like exit
   const handleGestureNavigate = useCallback((target: string, fingers: number) => {
     // Map targets to screens
     const screenMap: Record<string, Screen> = {
@@ -42,6 +44,7 @@ export default function DashboardPage() {
       "budgets": "budgets",
       "savings": "savings",
       "reports": "reports",
+      "investments": "investments",
     }
     
     if (target === "exit" && currentScreen === "home") {
@@ -97,6 +100,8 @@ export default function DashboardPage() {
         return <SavingsScreen onNavigate={navigateTo} />
       case "reports":
         return <ReportsScreen onNavigate={navigateTo} />
+      case "investments":
+        return <InvestmentsScreen onNavigate={navigateTo} />
       case "offline-ai":
         return <OfflineAIScreen onNavigate={navigateTo} />
       default:
