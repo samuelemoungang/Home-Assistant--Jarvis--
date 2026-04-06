@@ -106,6 +106,13 @@ function toReadableError(error: unknown): PiStatsError {
     }
   }
 
+  if (error instanceof Error && error.message) {
+    return {
+      kind: "unavailable",
+      message: `Pi data unavailable (${error.message}). Check Supabase tables, device_id, and source_updated_at freshness.`,
+    }
+  }
+
   return {
     kind: "unavailable",
     message: `Pi service not connected for device_id "${DEFAULT_DEVICE_ID}". Start pi-stats-service.py on the Pi or verify remote sync in Supabase.`,
