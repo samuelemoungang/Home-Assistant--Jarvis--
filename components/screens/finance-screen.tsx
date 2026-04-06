@@ -1,6 +1,6 @@
 "use client"
 
-import { TrendingUp, PieChart, Landmark, FileText, ArrowLeft, X, LineChart } from "lucide-react"
+import { TrendingUp, PieChart, Landmark, FileText, ArrowLeft, X, LineChart, RefreshCw } from "lucide-react"
 import { useFinance } from "@/lib/finance-context"
 import type { Screen } from "@/lib/navigation"
 import { useState, useRef, useCallback, useMemo } from "react"
@@ -9,7 +9,7 @@ interface FinanceScreenProps {
   onNavigate: (screen: Screen) => void
 }
 
-type ExpandedCard = "income" | "budgets" | "savings" | "reports" | "investments" | null
+type ExpandedCard = "income" | "budgets" | "savings" | "reports" | "investments" | "bank-sync" | null
 
 export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
   const { transactions, budgets, savings, currentMonth } = useFinance()
@@ -23,6 +23,7 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
     { key: "savings" as const, label: "Savings", icon: Landmark, target: "savings" as Screen },
     { key: "reports" as const, label: "Reports", icon: FileText, target: "reports" as Screen },
     { key: "investments" as const, label: "Investments", icon: LineChart, target: "investments" as Screen },
+    { key: "bank-sync" as const, label: "Bank Sync", icon: RefreshCw, target: "bank-sync" as Screen },
   ]
 
   // Long-press handlers
@@ -105,6 +106,15 @@ export function FinanceScreen({ onNavigate }: FinanceScreenProps) {
         `Choose your personal start date`,
         `Estimate return percentage automatically`,
         `Add invested capital to compute profit/loss`,
+      ],
+    },
+    "bank-sync": {
+      title: "Bank Sync",
+      lines: [
+        `Connect your Raiffeisen account`,
+        `Auto-sync transactions via Salt Edge`,
+        `Smart categorization with AI`,
+        `Review only uncategorized items`,
       ],
     },
   }
