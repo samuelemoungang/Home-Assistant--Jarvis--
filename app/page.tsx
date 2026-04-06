@@ -8,6 +8,7 @@ import { BudgetsScreen } from "@/components/screens/budgets-screen"
 import { SavingsScreen } from "@/components/screens/savings-screen"
 import { ReportsScreen } from "@/components/screens/reports-screen"
 import { InvestmentsScreen } from "@/components/screens/investments-screen"
+import { BankSyncScreen } from "@/components/screens/bank-sync-screen"
 import { OfflineAIScreen } from "@/components/screens/offline-ai-screen"
 import { AutoRefresh } from "@/components/dashboard/auto-refresh"
 import { FinanceProvider } from "@/lib/finance-context"
@@ -102,6 +103,8 @@ export default function DashboardPage() {
         return <ReportsScreen onNavigate={navigateTo} />
       case "investments":
         return <InvestmentsScreen onNavigate={navigateTo} />
+      case "bank-sync":
+        return <BankSyncScreen onNavigate={navigateTo} />
       case "offline-ai":
         return <OfflineAIScreen onNavigate={navigateTo} />
       default:
