@@ -42,7 +42,7 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
   const totalExpenses = useMemo(() => expenses.reduce((s, t) => s + t.amount, 0), [expenses])
 
   // Pie chart data: group expenses by category
-  const pieData = useMemo(() => {
+  const expensePieData = useMemo(() => {
     const groups: Record<string, number> = {}
     expenses.forEach(t => {
       groups[t.category] = (groups[t.category] || 0) + t.amount
@@ -53,6 +53,19 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
       fill: CHART_COLORS[i % CHART_COLORS.length],
     }))
   }, [expenses])
+
+  // Pie chart data: group incomes by category
+  const incomePieData = useMemo(() => {
+    const groups: Record<string, number> = {}
+    income.forEach(t => {
+      groups[t.category] = (groups[t.category] || 0) + t.amount
+    })
+    return Object.entries(groups).map(([name, value], i) => ({
+      name,
+      value,
+      fill: CHART_COLORS[i % CHART_COLORS.length],
+    }))
+  }, [income])
 
   // Bar chart: income vs expense per month (last 6 months)
   const barData = useMemo(() => {
@@ -147,14 +160,15 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
         {/* Charts + List */}
         <div className="flex w-full flex-1 flex-col gap-4 overflow-visible md:flex-row md:overflow-hidden">
           {/* Charts column */}
-          <div className="flex w-full flex-col gap-2 md:w-1/2">
-            {pieData.length > 0 ? (
-              <>
-                <p className="text-xs text-muted-foreground text-center">Expenses by Category</p>
-                <ResponsiveContainer width="100%" height={150}>
+          <div className="flex w-full flex-col gap-4 md:w-1/2">
+            {/* Income Pie Chart */}
+            {incomePieData.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-muted-foreground text-center">Income by Category</p>
+                <ResponsiveContainer width="100%" height={130}>
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={30} outerRadius={55} paddingAngle={3} dataKey="value">
-                      {pieData.map((entry) => (
+                    <Pie data={incomePieData} cx="50%" cy="50%" innerRadius={25} outerRadius={45} paddingAngle={3} dataKey="value">
+                      {incomePieData.map((entry) => (
                         <Cell key={entry.name} fill={entry.fill} />
                       ))}
                     </Pie>
@@ -174,16 +188,57 @@ export function IncomeExpenseScreen({ onNavigate }: IncomeExpenseScreenProps) {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {pieData.map((e) => (
+                  {incomePieData.map((e) => (
                     <div key={e.name} className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full" style={{ background: e.fill }} />
                       <span className="text-[10px] text-muted-foreground">{e.name}</span>
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="flex items-center justify-center flex-1">
+              <div className="flex items-center justify-center py-4">
+                <p className="text-xs text-muted-foreground">No income this month</p>
+              </div>
+            )}
+
+            {/* Expenses Pie Chart */}
+            {expensePieData.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-muted-foreground text-center">Expenses by Category</p>
+                <ResponsiveContainer width="100%" height={130}>
+                  <PieChart>
+                    <Pie data={expensePieData} cx="50%" cy="50%" innerRadius={25} outerRadius={45} paddingAngle={3} dataKey="value">
+                      {expensePieData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        color: "var(--foreground)",
+                        fontSize: "12px",
+                        padding: "8px 12px",
+                      }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "var(--foreground)", fontWeight: 600, marginBottom: "4px" }}
+                      formatter={(value: number, name: string) => [`${value.toLocaleString("en-CH")} CHF`, name]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {expensePieData.map((e) => (
+                    <div key={e.name} className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full" style={{ background: e.fill }} />
+                      <span className="text-[10px] text-muted-foreground">{e.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-4">
                 <p className="text-xs text-muted-foreground">No expenses this month</p>
               </div>
             )}
