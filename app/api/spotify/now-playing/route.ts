@@ -20,54 +20,61 @@ async function refreshAccessToken(refreshToken: string) {
   return response.json()
 }
 
-export async function GET() {
+async function getValidAccessToken(): Promise<string | null> {
   const tokens = readTokens()
+  if (!tokens) return null
 
-  if (!tokens) {
-    return NextResponse.json({ error: "not_connected" }, { status: 401 })
-  }
-
-  // Refresh access token if expiring within 60 seconds
-  let { access_token } = tokens
   if (Date.now() > tokens.expires_at - 60_000) {
     try {
       const refreshed = await refreshAccessToken(tokens.refresh_token)
-      if (!refreshed.access_token) {
-        return NextResponse.json({ error: "token_refresh_failed" }, { status: 401 })
-      }
-      access_token = refreshed.access_token
+      if (!refreshed.access_token) return null
       writeTokens({
-        access_token,
+        access_token: refreshed.access_token,
         refresh_token: refreshed.refresh_token ?? tokens.refresh_token,
         expires_at: Date.now() + refreshed.expires_in * 1000,
       })
+      return refreshed.access_token
     } catch {
-      return NextResponse.json({ error: "token_refresh_failed" }, { status: 401 })
+      return null
     }
   }
 
-  // Try currently playing first
-  const currentRes = await fetch(
-    "https://api.spotify.com/v1/me/player/currently-playing",
-    { headers: { Authorization: `Bearer ${access_token}` } }
-  )
+  return tokens.access_token
+}
 
-  if (currentRes.status === 200) {
-    const data = await currentRes.json()
+export async function GET() {
+  const access_token = await getValidAccessToken()
+  if (!access_token) {
+    return NextResponse.json({ error: "not_connected" }, { status: 401 })
+  }
+
+  // Use /me/player which includes device info
+  const playerRes = await fetch("https://api.spotify.com/v1/me/player", {
+    headers: { Authorization: `Bearer ${access_token}` },
+  })
+
+  if (playerRes.status === 200) {
+    const data = await playerRes.json()
     if (data?.item) {
       return NextResponse.json({
-        isPlaying: data.is_playing,
-        title: data.item.name,
+        isPlaying: data.is_playing as boolean,
+        title: data.item.name as string,
         artist: (data.item.artists as { name: string }[]).map((a) => a.name).join(", "),
-        album: data.item.album.name,
+        album: data.item.album.name as string,
         albumArt: (data.item.album.images as { url: string }[])[0]?.url ?? null,
         duration: data.item.duration_ms as number,
         progress: data.progress_ms as number,
+        device: data.device
+          ? {
+              name: data.device.name as string,
+              type: data.device.type as string,
+            }
+          : null,
       })
     }
   }
 
-  // Fall back to recently played
+  // Fall back to recently played (no device info available)
   const recentRes = await fetch(
     "https://api.spotify.com/v1/me/player/recently-played?limit=1",
     { headers: { Authorization: `Bearer ${access_token}` } }
@@ -85,6 +92,7 @@ export async function GET() {
         albumArt: (track.album.images as { url: string }[])[0]?.url ?? null,
         duration: track.duration_ms as number,
         progress: null,
+        device: null,
       })
     }
   }

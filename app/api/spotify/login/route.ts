@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 const SCOPES = [
   "user-read-currently-playing",
   "user-read-recently-played",
+  "user-read-playback-state",
+  "user-top-read",
 ].join(" ")
 
 export function GET() {
