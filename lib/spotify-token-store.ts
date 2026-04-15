@@ -1,7 +1,9 @@
-import fs from "fs"
-import path from "path"
+import { createClient } from "@supabase/supabase-js"
 
-const TOKEN_FILE = path.join(process.cwd(), "data", "spotify-tokens.json")
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export interface SpotifyTokens {
   access_token: string
@@ -9,20 +11,19 @@ export interface SpotifyTokens {
   expires_at: number
 }
 
-export function readTokens(): SpotifyTokens | null {
-  try {
-    if (!fs.existsSync(TOKEN_FILE)) return null
-    const data = fs.readFileSync(TOKEN_FILE, "utf-8")
-    return JSON.parse(data) as SpotifyTokens
-  } catch {
-    return null
-  }
+export async function readTokens(): Promise<SpotifyTokens | null> {
+  const { data, error } = await supabase
+    .from("spotify_tokens")
+    .select("access_token, refresh_token, expires_at")
+    .eq("id", 1)
+    .single()
+
+  if (error || !data) return null
+  return data as SpotifyTokens
 }
 
-export function writeTokens(tokens: SpotifyTokens): void {
-  const dir = path.dirname(TOKEN_FILE)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2))
+export async function writeTokens(tokens: SpotifyTokens): Promise<void> {
+  await supabase
+    .from("spotify_tokens")
+    .upsert({ id: 1, ...tokens })
 }
