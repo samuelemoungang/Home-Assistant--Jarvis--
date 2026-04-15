@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Music2, Smartphone, Monitor, Speaker, Tv, Tablet, Loader2, BarChart2, ChevronUp } from "lucide-react"
+import { Music2, Smartphone, Monitor, Speaker, Tv, Tablet, Loader2, BarChart2, ChevronUp, LogOut } from "lucide-react"
 
 interface NowPlaying {
   isPlaying: boolean
@@ -37,6 +37,13 @@ export function SpotifyNowPlaying() {
   const [stats, setStats] = useState<TopStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [showStats, setShowStats] = useState(false)
+
+  async function handleDisconnect() {
+    await fetch("/api/spotify/disconnect", { method: "POST" })
+    setTrack(null)
+    setStatus("not_connected")
+    setShowStats(false)
+  }
 
   useEffect(() => {
     async function fetchNowPlaying() {
@@ -213,6 +220,17 @@ export function SpotifyNowPlaying() {
               </div>
             </>
           )}
+
+          {/* Disconnect button */}
+          <div className="h-px bg-glass-border/50" />
+          <button
+            type="button"
+            onClick={handleDisconnect}
+            className="flex items-center gap-1.5 text-[9px] text-destructive/60 hover:text-destructive transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3 h-3" />
+            Disconnect Spotify
+          </button>
         </div>
       )}
     </div>
