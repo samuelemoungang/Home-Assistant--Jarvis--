@@ -15,6 +15,11 @@ const WeatherTime = dynamic(
   { ssr: false, loading: () => <div className="h-[72px]" /> }
 )
 
+const SpotifyNowPlaying = dynamic(
+  () => import("@/components/dashboard/spotify-now-playing").then((mod) => mod.SpotifyNowPlaying),
+  { ssr: false }
+)
+
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void
   onCameraToggle?: (active: boolean) => void
@@ -269,6 +274,9 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
 
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="pointer-events-auto mb-3">
+          <SpotifyNowPlaying />
+        </div>
         <div className="pointer-events-auto mb-3">
           <WeatherTime />
         </div>

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe /c \"npm run dev\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\samue' -Recurse -Filter 'npm.cmd' -ErrorAction SilentlyContinue -Depth 6 | Select-Object -First 5 FullName\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\samue\\\\AppData' -Recurse -Filter 'node.exe' -ErrorAction SilentlyContinue -Depth 5 | Select-Object -First 5 FullName\")"
+    ]
+  }
+}
