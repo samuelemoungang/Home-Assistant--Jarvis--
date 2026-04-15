@@ -145,8 +145,10 @@ export function SpotifyNowPlaying() {
           onClick={() => setShowStats((v) => !v)}
           className="ml-auto flex items-center gap-1 rounded-full border border-glass-border bg-secondary/50 px-2 py-0.5 text-[9px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
         >
-          {showStats ? <ChevronUp className="w-2.5 h-2.5" /> : <BarChart2 className="w-2.5 h-2.5" />}
-          {showStats ? "Chiudi" : "Statistiche"}
+          {showStats
+            ? <><ChevronUp className="w-2.5 h-2.5" /> Close</>
+            : <><BarChart2 className="w-2.5 h-2.5" /> Stats</>
+          }
         </button>
       </div>
 
@@ -167,7 +169,9 @@ export function SpotifyNowPlaying() {
             <>
               {/* Top genres */}
               <div>
-                <p className="text-[9px] uppercase tracking-widest text-muted-foreground/50 mb-1.5">Top generi</p>
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground/50 mb-1.5">
+                  Top genres
+                </p>
                 <div className="flex flex-wrap gap-1">
                   {stats.topGenres.map((genre, i) => (
                     <span
@@ -186,12 +190,14 @@ export function SpotifyNowPlaying() {
               {/* Top artists */}
               <div>
                 <p className="text-[9px] uppercase tracking-widest text-muted-foreground/50 mb-1.5">
-                  Top artisti · ultimi 30 giorni
+                  Top artists · last 30 days
                 </p>
                 <div className="flex flex-col gap-1.5">
                   {stats.topArtists.map((artist, i) => (
                     <div key={artist.name} className="flex items-center gap-2">
-                      <span className="text-[9px] text-muted-foreground/40 w-3 text-right flex-shrink-0">{i + 1}</span>
+                      <span className="text-[9px] text-muted-foreground/40 w-3 text-right flex-shrink-0">
+                        {i + 1}
+                      </span>
                       <div className="w-6 h-6 rounded-full overflow-hidden bg-secondary flex-shrink-0 border border-glass-border">
                         {artist.image ? (
                           // eslint-disable-next-line @next/next/no-img-element

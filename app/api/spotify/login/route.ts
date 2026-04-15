@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 const SCOPES = [
   "user-read-currently-playing",
@@ -7,16 +7,15 @@ const SCOPES = [
   "user-top-read",
 ].join(" ")
 
-export function GET() {
+export function GET(req: NextRequest) {
   const clientId = process.env.SPOTIFY_CLIENT_ID
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI
 
-  if (!clientId || !redirectUri) {
-    return NextResponse.json(
-      { error: "SPOTIFY_CLIENT_ID or SPOTIFY_REDIRECT_URI not set in .env" },
-      { status: 500 }
-    )
+  if (!clientId) {
+    return NextResponse.json({ error: "SPOTIFY_CLIENT_ID not set in .env" }, { status: 500 })
   }
+
+  // Derived from request so it works on localhost AND Vercel without any env change
+  const redirectUri = `${req.nextUrl.origin}/api/spotify/callback`
 
   const params = new URLSearchParams({
     client_id: clientId,
