@@ -62,8 +62,8 @@ export async function GET() {
 
   // Aggregate genres from top 20 artists
   const genreCount: Record<string, number> = {}
-  for (const artist of (genreData.items ?? []) as { genres: string[] }[]) {
-    for (const genre of artist.genres) {
+  for (const artist of (genreData.items ?? []) as { genres?: string[] }[]) {
+    for (const genre of (artist.genres ?? [])) {
       genreCount[genre] = (genreCount[genre] ?? 0) + 1
     }
   }
