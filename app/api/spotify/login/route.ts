@@ -23,6 +23,7 @@ export function GET() {
     response_type: "code",
     redirect_uri: redirectUri,
     scope: SCOPES,
+    show_dialog: "true",
   })
 
   return NextResponse.redirect(
