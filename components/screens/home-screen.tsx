@@ -273,8 +273,8 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
       })}
 
       {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <div className="pointer-events-auto mb-3">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none overflow-y-auto py-16">
+        <div className="pointer-events-auto mb-2">
           <SpotifyNowPlaying />
         </div>
         <div className="pointer-events-auto mb-3">

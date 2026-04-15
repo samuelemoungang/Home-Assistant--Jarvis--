@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
 
   const clientId = process.env.SPOTIFY_CLIENT_ID!
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET!
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI!
+
+  // Must match exactly what was sent in the login route
+  const redirectUri = `${req.nextUrl.origin}/api/spotify/callback`
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -46,15 +48,20 @@ export async function GET(req: NextRequest) {
   return new NextResponse(
     `<!DOCTYPE html>
 <html>
-<head><title>Spotify Connected</title></head>
+<head>
+  <meta charset="utf-8" />
+  <title>Spotify Connected</title>
+  <meta http-equiv="refresh" content="2;url=${req.nextUrl.origin}" />
+</head>
 <body style="font-family:monospace;background:#0a0a0a;color:#1DB954;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
   <div style="text-align:center">
-    <p style="font-size:2rem">✓</p>
+    <p style="font-size:2rem">&#10003;</p>
     <p>Spotify connected successfully!</p>
-    <p style="color:#666;font-size:0.75rem">You can close this tab.</p>
+    <p style="color:#666;font-size:0.75rem">Redirecting to dashboard...</p>
   </div>
+  <script>setTimeout(function(){ window.location.href = '${req.nextUrl.origin}'; }, 2000);</script>
 </body>
 </html>`,
-    { headers: { "Content-Type": "text/html" } }
+    { headers: { "Content-Type": "text/html; charset=utf-8" } }
   )
 }
