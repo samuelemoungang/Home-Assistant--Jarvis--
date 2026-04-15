@@ -272,15 +272,15 @@ export function HomeScreen({ onNavigate, onCameraToggle }: HomeScreenProps) {
         )
       })}
 
-      {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none overflow-y-auto py-16">
-        <div className="pointer-events-auto mb-2">
+      {/* Center content — padded to clear the 4 corner cards and bottom nav */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none overflow-y-auto pt-[88px] pb-[132px]">
+        <div className="pointer-events-auto mb-1.5">
           <SpotifyNowPlaying />
         </div>
-        <div className="pointer-events-auto mb-3">
+        <div className="pointer-events-auto mb-1.5">
           <WeatherTime />
         </div>
-        <div className="pointer-events-auto mb-3">
+        <div className="pointer-events-auto mb-1.5">
           <AvatarDisplay />
         </div>
         <div className="pointer-events-auto w-full max-w-md">
