@@ -36,6 +36,7 @@ export function SpotifyNowPlaying() {
   const [status, setStatus] = useState<Status>("loading")
   const [stats, setStats] = useState<TopStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
+  const [statsError, setStatsError] = useState<string | null>(null)
   const [showStats, setShowStats] = useState(false)
 
   async function handleDisconnect() {
@@ -66,10 +67,18 @@ export function SpotifyNowPlaying() {
   useEffect(() => {
     async function fetchStats() {
       setStatsLoading(true)
+      setStatsError(null)
       try {
         const res = await fetch("/api/spotify/top-genres")
-        if (res.ok) setStats(await res.json())
-      } catch { /* ignore */ } finally {
+        if (res.ok) {
+          setStats(await res.json())
+        } else {
+          const err = await res.json().catch(() => ({}))
+          setStatsError(err?.details?.error?.message ?? "Could not load stats")
+        }
+      } catch {
+        setStatsError("Network error")
+      } finally {
         setStatsLoading(false)
       }
     }
@@ -168,9 +177,18 @@ export function SpotifyNowPlaying() {
       {/* Stats panel */}
       {showStats && (
         <div className="border-t border-glass-border/50 pt-2 flex flex-col gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-          {statsLoading || !stats ? (
+          {statsLoading ? (
             <div className="flex items-center justify-center py-3">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/50" />
+            </div>
+          ) : statsError ? (
+            <div className="flex flex-col items-center gap-1.5 py-2">
+              <p className="text-[10px] text-destructive/70 text-center">{statsError}</p>
+              <p className="text-[9px] text-muted-foreground/40 text-center">Try reconnecting Spotify</p>
+            </div>
+          ) : !stats ? (
+            <div className="flex items-center justify-center py-3">
+              <p className="text-[10px] text-muted-foreground/40">No data available</p>
             </div>
           ) : (
             <>

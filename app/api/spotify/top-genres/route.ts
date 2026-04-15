@@ -38,6 +38,7 @@ export async function GET() {
     }
   }
 
+  // Fetch top genres and top artists in parallel
   const [genreRes, artistRes] = await Promise.all([
     fetch("https://api.spotify.com/v1/me/top/artists?limit=20&time_range=medium_term", {
       headers: { Authorization: `Bearer ${access_token}` },
@@ -47,12 +48,19 @@ export async function GET() {
     }),
   ])
 
-  if (!genreRes.ok || !artistRes.ok) {
-    return NextResponse.json({ error: "fetch_failed" }, { status: 500 })
+  // Surface the real Spotify error instead of a generic 500
+  if (!genreRes.ok) {
+    const err = await genreRes.json().catch(() => ({}))
+    return NextResponse.json({ error: "spotify_error", details: err, status: genreRes.status }, { status: 502 })
+  }
+  if (!artistRes.ok) {
+    const err = await artistRes.json().catch(() => ({}))
+    return NextResponse.json({ error: "spotify_error", details: err, status: artistRes.status }, { status: 502 })
   }
 
   const [genreData, artistData] = await Promise.all([genreRes.json(), artistRes.json()])
 
+  // Aggregate genres from top 20 artists
   const genreCount: Record<string, number> = {}
   for (const artist of (genreData.items ?? []) as { genres: string[] }[]) {
     for (const genre of artist.genres) {
