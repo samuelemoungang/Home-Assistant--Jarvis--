@@ -60,9 +60,15 @@ export async function GET() {
 
   const [genreData, artistData] = await Promise.all([genreRes.json(), artistRes.json()])
 
-  // Aggregate genres from top 20 artists
+  type SpotifyArtist = { name: string; images: { url: string }[]; genres?: string[] }
+
+  // Aggregate genres from ALL artists across both time ranges
   const genreCount: Record<string, number> = {}
-  for (const artist of (genreData.items ?? []) as { genres?: string[] }[]) {
+  const allArtists = [
+    ...((genreData.items ?? []) as SpotifyArtist[]),
+    ...((artistData.items ?? []) as SpotifyArtist[]),
+  ]
+  for (const artist of allArtists) {
     for (const genre of (artist.genres ?? [])) {
       genreCount[genre] = (genreCount[genre] ?? 0) + 1
     }
@@ -72,7 +78,7 @@ export async function GET() {
     .slice(0, 5)
     .map(([genre]) => genre)
 
-  const topArtists = ((artistData.items ?? []) as { name: string; images: { url: string }[] }[])
+  const topArtists = ((artistData.items ?? []) as SpotifyArtist[])
     .slice(0, 5)
     .map((a) => ({
       name: a.name,

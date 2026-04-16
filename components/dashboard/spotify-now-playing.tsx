@@ -198,7 +198,7 @@ export function SpotifyNowPlaying() {
                   Top genres
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {stats.topGenres.map((genre, i) => (
+                  {stats.topGenres.length > 0 ? stats.topGenres.map((genre, i) => (
                     <span
                       key={genre}
                       className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium capitalize border border-glass-border bg-secondary/60 text-muted-foreground"
@@ -206,7 +206,9 @@ export function SpotifyNowPlaying() {
                       <span className="text-[8px] text-muted-foreground/40">#{i + 1}</span>
                       {genre}
                     </span>
-                  ))}
+                  )) : (
+                    <span className="text-[9px] text-muted-foreground/40">Not enough data yet</span>
+                  )}
                 </div>
               </div>
 
