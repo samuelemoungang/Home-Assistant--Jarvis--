@@ -38,45 +38,28 @@ export async function GET() {
     }
   }
 
-  // Fetch top genres and top artists in parallel
-  const [genreRes, artistRes] = await Promise.all([
-    fetch("https://api.spotify.com/v1/me/top/artists?limit=20&time_range=medium_term", {
+  type SpotifyArtist = { id: string; name: string; images: { url: string }[]; genres?: string[] }
+  type SpotifyTrack = { artists: { id: string }[] }
+
+  // Fetch top artists (short_term) + top tracks (medium_term) in parallel
+  const [artistRes, trackRes] = await Promise.all([
+    fetch("https://api.spotify.com/v1/me/top/artists?limit=5&time_range=short_term", {
       headers: { Authorization: `Bearer ${access_token}` },
     }),
-    fetch("https://api.spotify.com/v1/me/top/artists?limit=5&time_range=short_term", {
+    fetch("https://api.spotify.com/v1/me/top/tracks?limit=30&time_range=medium_term", {
       headers: { Authorization: `Bearer ${access_token}` },
     }),
   ])
 
-  // Surface the real Spotify error instead of a generic 500
-  if (!genreRes.ok) {
-    const err = await genreRes.json().catch(() => ({}))
-    return NextResponse.json({ error: "spotify_error", details: err, status: genreRes.status }, { status: 502 })
-  }
   if (!artistRes.ok) {
     const err = await artistRes.json().catch(() => ({}))
-    return NextResponse.json({ error: "spotify_error", details: err, status: artistRes.status }, { status: 502 })
+    return NextResponse.json({ error: "spotify_error", details: err }, { status: 502 })
   }
 
-  const [genreData, artistData] = await Promise.all([genreRes.json(), artistRes.json()])
-
-  type SpotifyArtist = { name: string; images: { url: string }[]; genres?: string[] }
-
-  // Aggregate genres from ALL artists across both time ranges
-  const genreCount: Record<string, number> = {}
-  const allArtists = [
-    ...((genreData.items ?? []) as SpotifyArtist[]),
-    ...((artistData.items ?? []) as SpotifyArtist[]),
-  ]
-  for (const artist of allArtists) {
-    for (const genre of (artist.genres ?? [])) {
-      genreCount[genre] = (genreCount[genre] ?? 0) + 1
-    }
-  }
-  const topGenres = Object.entries(genreCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([genre]) => genre)
+  const [artistData, trackData] = await Promise.all([
+    artistRes.json(),
+    trackRes.ok ? trackRes.json() : Promise.resolve({ items: [] }),
+  ])
 
   const topArtists = ((artistData.items ?? []) as SpotifyArtist[])
     .slice(0, 5)
@@ -84,6 +67,44 @@ export async function GET() {
       name: a.name,
       image: a.images?.[1]?.url ?? a.images?.[0]?.url ?? null,
     }))
+
+  // Collect unique artist IDs from top tracks to widen genre coverage
+  const trackArtistIds = [
+    ...new Set(
+      ((trackData.items ?? []) as SpotifyTrack[])
+        .flatMap((t) => t.artists.map((a) => a.id))
+    ),
+  ].slice(0, 50) // Spotify batch limit
+
+  // Fetch full artist objects (includes genres) for all track artists
+  const genreCount: Record<string, number> = {}
+
+  if (trackArtistIds.length > 0) {
+    const fullArtistRes = await fetch(
+      `https://api.spotify.com/v1/artists?ids=${trackArtistIds.join(",")}`,
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    )
+    if (fullArtistRes.ok) {
+      const fullArtistData = await fullArtistRes.json()
+      for (const artist of (fullArtistData.artists ?? []) as SpotifyArtist[]) {
+        for (const genre of (artist.genres ?? [])) {
+          genreCount[genre] = (genreCount[genre] ?? 0) + 1
+        }
+      }
+    }
+  }
+
+  // Also include genres from top artists directly
+  for (const artist of (artistData.items ?? []) as SpotifyArtist[]) {
+    for (const genre of (artist.genres ?? [])) {
+      genreCount[genre] = (genreCount[genre] ?? 0) + 2 // weight top artists higher
+    }
+  }
+
+  const topGenres = Object.entries(genreCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([genre]) => genre)
 
   return NextResponse.json({ topGenres, topArtists })
 }
