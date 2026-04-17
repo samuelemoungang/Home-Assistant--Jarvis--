@@ -360,5 +360,3 @@ Home-Assistant--Jarvis--/
 Personal private project. All rights reserved.
 
 ---
-
-*Self-hosted with ❤️ in Valais, Switzerland.*
