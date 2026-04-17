@@ -1,4 +1,4 @@
-# 🤖 Jarvis — Personal Home Assistant
+# 🤖 Jarvis — Personal Home Assistant 1.0
 
 > A self-hosted personal dashboard running on a **Raspberry Pi 5**, designed to centralize finances, investments, home monitoring and AI in a single interface. Built to grow over time with new hardware and software integrations.
 
